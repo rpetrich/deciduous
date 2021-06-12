@@ -233,10 +233,12 @@ goals:
                     if (typeof from == "object") {
                         const [fromName, label] = Object.entries(from)[0];
                         const props = {
-                            xlabel: label === null ? "" : wordwrap(label, 20),
                             fontcolor: "#DB2955",
                             ...properties,
                         };
+                        if (label !== null) {
+                            props.xlabel= wordwrap(label, 20);
+                        }
                         if (typeof from.implemented == "boolean" && !from.implemented) {
                             props.style = "dotted";
                         }
@@ -256,7 +258,6 @@ goals:
         }
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
-            console.log(parsed);
             const font = 'Times New Roman'
             const header = `digraph {
     // Base Styling
@@ -272,6 +273,7 @@ goals:
     edge [ fontname=${JSON.stringify(font)} color="#2B303A" ]
 
     reality [ label="Reality" fillcolor="#2B303A" fontcolor="#ffffff" ]
+
 `;
             const goals = parsed.goals || [];
             const attacks = parsed.attacks || [];
@@ -289,7 +291,7 @@ goals:
             }));
             const allEdges = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
             const footer = '}'
-            return [header + allNodes.join("\n") + "\n" + allEdges.join("\n") + "\n" + footer, parsed.title];
+            return [header + "    " + allNodes.join("\n    ") + "\n\n    " + allEdges.join("\n    ") + "\n" + footer, parsed.title];
         }
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
@@ -304,16 +306,19 @@ goals:
                     lastInput = newInput;
                     try {
                         const [dot, title] = convertToDot(newInput);
-                        console.log(dot);
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
                         if (window.File && URL.createObjectURL) {
-                            const file = new File([svg], "graph.svg", {
-                                "type": "image/svg+xml",
+                            // const file = new File([svg], "graph.svg", {
+                            //     "type": "image/svg+xml",
+                            // });
+                            // downloadLink.download = title + ".svg";
+                            const file = new File([dot], "graph.dot", {
+                                "type": "text/vnd.graphviz",
                             });
+                            downloadLink.download = title + ".dot";
                             const newObjectURL = URL.createObjectURL(file);
                             downloadLink.href = newObjectURL;
-                            downloadLink.download = title + ".svg";
                             if (lastObjectURL != "") {
                                 URL.revokeObjectURL(lastObjectURL);
                             }
