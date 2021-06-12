@@ -68,6 +68,8 @@ attacks:
   - private_bucket
   - access_control_server_side:
     backwards: true
+  - internal_only_bucket:
+    backwards: true
 - compromise_user_creds: Compromise user credentials
   from:
   - brute_force
@@ -87,7 +89,9 @@ attacks:
 - ssh_to_public_machine: SSH to an accessible machine
   from:
   - compromise_admin_creds: '#yolosec'
-  - compromise_aws_creds
+    ungrouped: true
+  - compromise_aws_creds:
+    ungrouped: true
   - intercept_2fa
 - lateral_movement_to_machine_with_access: Lateral movement to machine with access to target bucket
   from:
@@ -102,8 +106,6 @@ attacks:
   from:
   - private_bucket
   - disallow_bucket_urls:
-    backwards: true
-  - internal_only_bucket:
     backwards: true
 - find_systems_with_access: Find systems with R/W access to target bucket
   from:
@@ -266,7 +268,7 @@ goals:
             const parsed = jsyaml.load(yaml);
             const font = 'Times New Roman'
             const header = `digraph {
-    // Base Styling
+    // base graph styling
     rankdir="TB";
     splines=true;
     overlap=false;
@@ -278,6 +280,7 @@ goals:
     node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
     edge [ fontname=${JSON.stringify(font)} color="#2B303A" ]
 
+    // is reality a hologram?
     reality [ label="Reality" fillcolor="#2B303A" fontcolor="#ffffff" ]
 
 `;
@@ -285,16 +288,25 @@ goals:
             const facts = parsed.facts || [];
             const attacks = parsed.attacks || [];
             const mitigations = parsed.mitigations || [];
-            const allNodeLines = nodes(facts, {
-                fillcolor: "#C6CCD2",
-            }).concat(nodes(attacks, {
-                fillcolor: "#ED96AC",
-            })).concat(nodes(mitigations, {
-                fillcolor: "#ABD2FA",
-            })).concat(nodes(goals, {
-                fillcolor: "#DB2955",
-                fontcolor: "#ffffff",
-            }));
+            const allNodeLines = [
+                `// facts`,
+                ...nodes(facts, {
+                    fillcolor: "#C6CCD2",
+                }),
+                `// attacks`,
+                ...nodes(attacks, {
+                    fillcolor: "#ED96AC",
+                }),
+                `// mitigations`,
+                ...nodes(mitigations, {
+                    fillcolor: "#ABD2FA",
+                }),
+                `// goals`,
+                ...nodes(goals, {
+                    fillcolor: "#DB2955",
+                    fontcolor: "#ffffff",
+                })
+            ];
             const allEdgeLines = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
             const subgraphs = [];
             const reversedDirection = {};
@@ -302,7 +314,7 @@ goals:
                 const [toName] = Object.entries(node)[0];
                 for (const from of node.from) {
                     const [fromName, label, props] = parseFrom(from);
-                    if (!from.backwards) {
+                    if (!from.backwards && !from.ungrouped) {
                         const toNames = reversedDirection[fromName] || (reversedDirection[fromName] = []);
                         toNames.push(toName);
                     }
@@ -318,8 +330,8 @@ goals:
     ${toNames.map(mangleName).join(" -> ")} [ style="invis" ]`);
                 }
             }
-            const footer = '}'
-            return [header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n" + subgraphs.join("\n\n")  + footer, parsed.title];
+            const footer = "\n\n}\n";
+            return [header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n")  + footer, parsed.title];
         }
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
