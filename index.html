@@ -129,10 +129,10 @@ attacks:
   - single_tenant_hsm
 
 mitigations:
-- private_bucket: Auth required / ACLs (private bucket)
+- disallow_crawling: Disallow crawling on site maps
   from:
   - reality
-- disallow_crawling: Disallow crawling on site maps
+- private_bucket: Auth required / ACLs (private bucket)
   from:
   - reality
 - lock_down_acls: Lock down web client with creds / ACLs
@@ -229,33 +229,35 @@ goals:
                 });
             });
         }
+        function parseFrom(raw) {
+            if (typeof raw == "object") {
+                const [fromName, label] = Object.entries(raw)[0];
+                return [fromName, label, raw]
+            }
+            return [String(raw), null, {}];
+        }
         function edges(entries, properties) {
             return entries.reduce((edges, value) => {
                 const [name] = Object.entries(value)[0];
                 (value.from || []).forEach((from) => {
-
-                    if (typeof from == "object") {
-                        const [fromName, label] = Object.entries(from)[0];
-                        const props = {
-                            fontcolor: "#DB2955",
-                            ...properties,
-                        };
-                        if (label !== null) {
-                            props.xlabel= wordwrap(label, 20);
-                        }
-                        if (typeof from.implemented == "boolean" && !from.implemented) {
-                            props.style = "dotted";
-                        }
-                        if (from.backwards) {
-                            props.style = "dotted";
-                            props.color = "#7692FF";
-                            props.weight = "0";
-                            // props.constraint = "false";
-                        }
-                        edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
-                    } else {
-                        edges.push(line(`${mangleName(from)} -> ${mangleName(name)}`, properties));
+                    const [fromName, label, fromProps] = parseFrom(from);
+                    const props = {
+                        ...properties,
+                    };
+                    if (label !== null) {
+                        props.xlabel = wordwrap(label, 20);
+                        props.fontcolor = "#DB2955";
                     }
+                    if (typeof fromProps.implemented == "boolean" && !fromProps.implemented) {
+                        props.style = "dotted";
+                    }
+                    if (fromProps.backwards) {
+                        props.style = "dotted";
+                        props.color = "#7692FF";
+                        props.weight = "0";
+                        // props.constraint = "false";
+                    }
+                    edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
                 });
                 return edges;
             }, []);
@@ -283,7 +285,7 @@ goals:
             const facts = parsed.facts || [];
             const attacks = parsed.attacks || [];
             const mitigations = parsed.mitigations || [];
-            const allNodes = nodes(facts, {
+            const allNodeLines = nodes(facts, {
                 fillcolor: "#C6CCD2",
             }).concat(nodes(attacks, {
                 fillcolor: "#ED96AC",
@@ -293,9 +295,31 @@ goals:
                 fillcolor: "#DB2955",
                 fontcolor: "#ffffff",
             }));
-            const allEdges = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
+            const allEdgeLines = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
+            const subgraphs = [];
+            const reversedDirection = {};
+            for (const node of facts.concat(attacks).concat(mitigations)) {
+                const [toName] = Object.entries(node)[0];
+                for (const from of node.from) {
+                    const [fromName, label, props] = parseFrom(from);
+                    if (!from.backwards) {
+                        const toNames = reversedDirection[fromName] || (reversedDirection[fromName] = []);
+                        toNames.push(toName);
+                    }
+                }
+            }
+            for (const [fromName, toNames] of Object.entries(reversedDirection)) {
+                if (toNames.length > 1) {
+                    subgraphs.push(`    subgraph ${mangleName(fromName)}_order {
+        rank=same;
+        rankdir=LR;
+        ${toNames.map(toName => mangleName(toName) + ";").join("\n        ")}
+    }
+    ${toNames.map(mangleName).join(" -> ")} [ style="invis" ]`);
+                }
+            }
             const footer = '}'
-            return [header + "    " + allNodes.join("\n    ") + "\n\n    " + allEdges.join("\n    ") + "\n" + footer, parsed.title];
+            return [header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n" + subgraphs.join("\n\n")  + footer, parsed.title];
         }
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
