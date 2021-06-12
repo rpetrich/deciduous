@@ -213,7 +213,7 @@ goals:
         }
         function mangleName(name) {
             if (/^\d+/.test(name)) {
-                return '_' + name;
+                return JSON.stringify(name);
             }
             return name;
         }
