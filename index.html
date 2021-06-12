@@ -238,19 +238,24 @@
             function rerender() {
                 const newInput = inputSource.value;
                 if (newInput != lastInput) {
-                    const svg = graphviz.layout(newInput, "svg", "dot");
                     lastInput = newInput;
-                    renderTarget.innerHTML = svg;
-                    if (window.File && URL.createObjectURL) {
-                        const file = new File([svg], "graph.svg", {
-                            "type": "image/svg+xml",
-                        });
-                        const newObjectURL = URL.createObjectURL(file);
-                        downloadLink.href = newObjectURL;
-                        if (lastObjectURL != "") {
-                            URL.revokeObjectURL(lastObjectURL);
+                    try {
+                        const svg = graphviz.layout(newInput, "svg", "dot");
+                        renderTarget.innerHTML = svg;
+                        if (window.File && URL.createObjectURL) {
+                            const file = new File([svg], "graph.svg", {
+                                "type": "image/svg+xml",
+                            });
+                            const newObjectURL = URL.createObjectURL(file);
+                            downloadLink.href = newObjectURL;
+                            if (lastObjectURL != "") {
+                                URL.revokeObjectURL(lastObjectURL);
+                            }
+                            lastObjectURL = newObjectURL;
                         }
-                        lastObjectURL = newObjectURL;
+                    } catch (e) {
+                        renderTarget.innerText = String(e);
+                        downloadLink.removeAttribute("href");
                     }
                 }
             }
