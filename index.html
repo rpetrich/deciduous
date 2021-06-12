@@ -66,9 +66,9 @@ attacks:
 - phishing: Phishing
   from:
   - private_bucket
-  - access_control_server_side:
-    backwards: true
   - internal_only_bucket:
+    backwards: true
+  - access_control_server_side:
     backwards: true
 - compromise_user_creds: Compromise user credentials
   from:
@@ -106,6 +106,8 @@ attacks:
   from:
   - private_bucket
   - disallow_bucket_urls:
+    backwards: true
+  - 2fa:
     backwards: true
 - find_systems_with_access: Find systems with R/W access to target bucket
   from:
@@ -145,7 +147,6 @@ mitigations:
   - analyze_web_client
 - 2fa: 2FA
   from:
-  - compromise_user_creds
   - compromise_admin_creds: '#yolosec'
   - compromise_aws_creds
 - ip_allowlist_for_ssh: IP allowlist for SSH
@@ -156,7 +157,7 @@ mitigations:
   - compromise_presigned
 - disallow_bucket_urls: Disallow the use of URLs to access buckets
   from:
-  - compromise_presigned
+  - compromise_quickly
 - vuln_scanning: 3rd party library checking / vuln scanning
   from:
   - exploit_known_vulns
@@ -176,6 +177,7 @@ goals:
   from:
   - wayback: '#yolosec'
   - public_bucket
+  - subsystem_with_access
   - analyze_web_client
   - lateral_movement_to_machine_with_access
   - compromise_presigned
@@ -258,6 +260,8 @@ goals:
                         props.color = "#7692FF";
                         props.weight = "0";
                         // props.constraint = "false";
+                    } else {
+                        props.rankdir = "TB";
                     }
                     edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
                 });
@@ -310,7 +314,8 @@ goals:
             const allEdgeLines = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
             const subgraphs = [];
             const reversedDirection = {};
-            for (const node of facts.concat(attacks).concat(mitigations)) {
+            const allNodes = facts.concat(attacks).concat(mitigations);
+            for (const node of allNodes) {
                 const [toName] = Object.entries(node)[0];
                 for (const from of node.from) {
                     const [fromName, label, props] = parseFrom(from);
@@ -324,10 +329,19 @@ goals:
                 if (toNames.length > 1) {
                     subgraphs.push(`    subgraph ${mangleName(fromName)}_order {
         rank=same;
-        rankdir=LR;
+        rankdir=TB;
         ${toNames.map(toName => mangleName(toName) + ";").join("\n        ")}
     }
     ${toNames.map(mangleName).join(" -> ")} [ style="invis" ]`);
+                }
+            }
+            for (const node of allNodes) {
+                const [toName] = Object.entries(node)[0];
+                if (!reversedDirection[toName]) {
+                    for (const goal of goals) {
+                    const [goalName] = Object.entries(goal)[0];
+                        subgraphs.push(`${mangleName(toName)} -> ${mangleName(goalName)} [ style="invis" ]`);
+                    }
                 }
             }
             const footer = "\n\n}\n";
