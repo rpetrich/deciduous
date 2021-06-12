@@ -280,18 +280,18 @@ goals:
 
 `;
             const goals = parsed.goals || [];
+            const facts = parsed.facts || [];
             const attacks = parsed.attacks || [];
             const mitigations = parsed.mitigations || [];
-            const facts = parsed.facts || [];
-            const allNodes = nodes(goals, {
-                fillcolor: "#DB2955",
-                fontcolor: "#ffffff",
+            const allNodes = nodes(facts, {
+                fillcolor: "#C6CCD2",
             }).concat(nodes(attacks, {
                 fillcolor: "#ED96AC",
             })).concat(nodes(mitigations, {
                 fillcolor: "#ABD2FA",
-            })).concat(nodes(facts, {
-                fillcolor: "#C6CCD2",
+            })).concat(nodes(goals, {
+                fillcolor: "#DB2955",
+                fontcolor: "#ffffff",
             }));
             const allEdges = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
             const footer = '}'
