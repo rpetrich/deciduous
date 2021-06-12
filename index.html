@@ -13,9 +13,9 @@
             overflow: hidden;
         }
         #inputSource {
-            display: block;
-            width: 100%;
-            height: 40vh;
+            position: absolute;
+            width: 40%;
+            height: 100vh;
             resize: none;
             border: medium none;
             appearance: none;
@@ -26,12 +26,16 @@
             padding: 6px;
             border-bottom: 1px solid grey;
             box-sizing: border-box;
+            white-space: nowrap;
         }
         #errorTarget {
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
         }
-        .bottomArea {
-            height: 60vh;
+        .contentArea {
+            position: absolute;
+            left: 40%;
+            width: 60%;
+            height: 100vh;
             overflow: auto;
         }
     </style>
@@ -178,7 +182,7 @@ goals:
   - aws_0day
   - supply_chain_backdoor
 </textarea>
-    <div class="bottomArea"><div id="errorTarget"></div><a id="downloadLink" download="decision-tree.svg"><div id="renderTarget"></div></a></div>
+    <div class="contentArea"><div id="errorTarget"></div><a id="downloadLink" download="decision-tree.svg"><div id="renderTarget"></div></a></div>
     <script>
         function wordwrap(text, limit) {
             text = String(text);
