@@ -38,6 +38,18 @@
             height: 100vh;
             overflow: auto;
         }
+        @media print {
+            .contentArea {
+                position: static;
+                left: 0;
+                width: auto;
+                height: auto;
+                overflow: visible;
+            }
+            #inputSource {
+                display: none;
+            }
+        }
     </style>
 </head>
 
