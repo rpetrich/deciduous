@@ -340,7 +340,7 @@ goals:
                 if (!reversedDirection[toName]) {
                     for (const goal of goals) {
                     const [goalName] = Object.entries(goal)[0];
-                        subgraphs.push(`${mangleName(toName)} -> ${mangleName(goalName)} [ style="invis" ]`);
+                        subgraphs.push(`    ${mangleName(toName)} -> ${mangleName(goalName)} [ style="invis" ]`);
                     }
                 }
             }
