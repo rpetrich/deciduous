@@ -20,12 +20,17 @@
             border: medium none;
             appearance: none;
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 105%;
             outline: 0;
             overflow: auto;
-            padding: 0;
+            padding: 6px;
             border-bottom: 1px solid grey;
+            box-sizing: border-box;
         }
-        #renderTarget {
+        #errorTarget {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .bottomArea {
             height: 60vh;
             overflow: auto;
         }
@@ -36,70 +41,214 @@
     <textarea id="inputSource">
 title: Attack Tree for S3 Bucket with Video Recordings
 
-goals:
-  s3_asset:
-    title: "Access video\nrecordings in\nS3 bucket\n(attackers win)"
-    from:
-    - wayback: '#yolosec'
-    - bucket_search
-
 facts:
-  wayback:
-    title: "API cache\n(e.g. Wayback\nMachine)"
-    from:
-    - reality: '#yolosec'
-  bucket_public:
-    title: "S3 bucket\nset to public"
-    from:
-    - reality: '#yolosec'
+- wayback: API cache (e.g. Wayback Machine)
+  from:
+  - reality: '#yolosec'
+- public_bucket: S3 bucket set to public
+  from:
+  - bucket_search: '#yolosec'
+- subsystem_with_access: Subsystem with access to bucket data
+  from:
+  - compromise_user_creds
 
 attacks:
-  bucket_search:
-    title: "AWS public\nbuckets search"
-    from:
-    - disallow_crawling
-  brute_force:
-    title: "Brute force"
-    from:
-    - auth_required
+- bucket_search: AWS public buckets search
+  from:
+  - disallow_crawling
+- brute_force: Brute force
+  from:
+  - private_bucket
+- phishing: Phishing
+  from:
+  - private_bucket
+  - access_control_server_side:
+    backwards: true
+- compromise_user_creds: Compromise user credentials
+  from:
+  - brute_force
+  - phishing
+- analyze_web_client:  Manually analyze web client for access control misconfig
+  from:
+  - lock_down_acls
+- compromise_admin_creds: Compromise admin creds
+  from:
+  - phishing
+- compromise_aws_creds: Compromise AWS admin creds
+  from:
+  - phishing
+- intercept_2fa: Intercept 2FA
+  from:
+  - 2fa
+- ssh_to_public_machine: SSH to an accessible machine
+  from:
+  - compromise_admin_creds: '#yolosec'
+  - compromise_aws_creds
+  - intercept_2fa
+- lateral_movement_to_machine_with_access: Lateral movement to machine with access to target bucket
+  from:
+  - ip_allowlist_for_ssh
+- compromise_presigned: Compromise presigned URLs
+  from:
+  - phishing
+- compromise_quickly: Compromise URL within N time period
+  from:
+  - short_lived_presigning
+- recon_on_s3: Recon on S3 buckets
+  from:
+  - private_bucket
+  - disallow_bucket_urls:
+    backwards: true
+  - internal_only_bucket:
+    backwards: true
+- find_systems_with_access: Find systems with R/W access to target bucket
+  from:
+  - recon_on_s3: '#yolosec'
+- exploit_known_vulns: Exploit known 3rd party library vulns
+  from:
+  - find_systems_with_access
+- buy_0day: Buy 0day
+  from:
+  - vuln_scanning
+- discover_0day: Manual discovery of 0day
+  from:
+  - vuln_scanning
+- exploit_vulns: Exploit vulns
+  from:
+  - buy_0day
+  - discover_0day
+- aws_0day: 0day in AWS multitenant systems
+  from:
+  - ips
+- supply_chain_backdoor: Supply chain compromise (backdoor)
+  from:
+  - single_tenant_hsm
 
 mitigations:
-  auth_required:
-    title: "Auth required / ACLs\n(private bucket)"
-    from:
-    - reality
-  disallow_crawling:
-    title: "Disallow\ncrawling\non site maps"
-    from:
-    - reality
+- private_bucket: Auth required / ACLs (private bucket)
+  from:
+  - reality
+- disallow_crawling: Disallow crawling on site maps
+  from:
+  - reality
+- lock_down_acls: Lock down web client with creds / ACLs
+  from:
+  - subsystem_with_access
+- access_control_server_side: Perform all access control server side
+  from:
+  - analyze_web_client
+- 2fa: 2FA
+  from:
+  - compromise_user_creds
+  - compromise_admin_creds: '#yolosec'
+  - compromise_aws_creds
+- ip_allowlist_for_ssh: IP allowlist for SSH
+  from:
+  - ssh_to_public_machine
+- short_lived_presigning: Make URL short lived
+  from:
+  - compromise_presigned
+- disallow_bucket_urls: Disallow the use of URLs to access buckets
+  from:
+  - compromise_presigned
+- vuln_scanning: 3rd party library checking / vuln scanning
+  from:
+  - exploit_known_vulns
+- ips: Exploit prevention / detection
+  from:
+  - exploit_vulns
+- single_tenant_hsm: Use single tenant AWS HSM
+  from:
+  - aws_0day:
+    implemented: false
+- internal_only_bucket: No public system has R/W access (internal only)
+  from:
+  - find_systems_with_access
+
+goals:
+- s3_asset: Access video recordings in S3 bucket (attackers win)
+  from:
+  - wayback: '#yolosec'
+  - public_bucket
+  - analyze_web_client
+  - lateral_movement_to_machine_with_access
+  - compromise_presigned
+  - compromise_quickly
+  - exploit_vulns
+  - aws_0day
+  - supply_chain_backdoor
 </textarea>
-    <a id="downloadLink" download="decision-tree.svg"><div id="renderTarget"></div></a>
+    <div class="bottomArea"><div id="errorTarget"></div><a id="downloadLink" download="decision-tree.svg"><div id="renderTarget"></div></a></div>
     <script>
+        function wordwrap(text, limit) {
+            text = String(text);
+            if (text.indexOf("\n") != -1) {
+                return text;
+            }
+            const split = text.split(" ");
+            let all = [];
+            let current = [];
+            let currentLength = 0;
+            for (let i = 0; i < split.length; i++) {
+                const line = split[i];
+                if (currentLength == 0 || (currentLength + line.length < limit && line[0] != "(")) {
+                    current.push(line);
+                    currentLength += line.length;
+                } else {
+                    all.push(current.join(" "));
+                    current = [line];
+                    currentLength = line.length;
+                }
+            }
+            all.push(current.join(" "));
+            return all.join("\n");
+        }
+        function mangleName(name) {
+            if (/^\d+/.test(name)) {
+                return '_' + name;
+            }
+            return name;
+        }
         function line(name, properties) {
             const entries = Object.entries(properties);
             if (entries.length == 0) {
                 return name;
             }
-            return name + "[ " + entries.map(([key, value]) => `${key}=${JSON.stringify(value)}`).join(" ") + " ]";
+            return name + " [ " + entries.map(([key, value]) => `${key}=${JSON.stringify(value)}`).join(" ") + " ]";
         }
-        function nodes(entries, properties) {
-            return entries.map(([name, value]) => line(name, {
-                label: typeof value == "string" ? value : value.title,
-                ...properties,
-            }));
+        function nodes(values, properties) {
+            return values.map(value => {
+                const [name, label] = Object.entries(value)[0];
+                return line(mangleName(name), {
+                    label: wordwrap(label === null ? name : label, 18),
+                    ...properties,
+                });
+            });
         }
         function edges(entries, properties) {
-            return entries.reduce((edges, [name, value]) => {
+            return entries.reduce((edges, value) => {
+                const [name] = Object.entries(value)[0];
                 (value.from || []).forEach((from) => {
+
                     if (typeof from == "object") {
-                        from = Object.entries(from)[0];
-                        edges.push(line(`${from[0]} -> ${name}`, {
-                            xlabel: from[1],
+                        const [fromName, label] = Object.entries(from)[0];
+                        const props = {
+                            xlabel: label === null ? "" : wordwrap(label, 20),
                             fontcolor: "#DB2955",
                             ...properties,
-                        }));
+                        };
+                        if (typeof from.implemented == "boolean" && !from.implemented) {
+                            props.style = "dotted";
+                        }
+                        if (from.backwards) {
+                            props.style = "dotted";
+                            props.color = "#7692FF";
+                            props.weight = "0";
+                            // props.constraint = "false";
+                        }
+                        edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
                     } else {
-                        edges.push(line(`${from} -> ${name}`, properties));
+                        edges.push(line(`${mangleName(from)} -> ${mangleName(name)}`, properties));
                     }
                 });
                 return edges;
@@ -108,7 +257,7 @@ mitigations:
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
             console.log(parsed);
-            const font = 'Arial'
+            const font = 'Times New Roman'
             const header = `digraph {
     // Base Styling
     rankdir="TB";
@@ -124,10 +273,10 @@ mitigations:
 
     reality [ label="Reality" fillcolor="#2B303A" fontcolor="#ffffff" ]
 `;
-            const goals = Object.entries(parsed.goals || {});
-            const attacks = Object.entries(parsed.attacks || {});
-            const mitigations = Object.entries(parsed.mitigations || {});
-            const facts = Object.entries(parsed.facts || {});
+            const goals = parsed.goals || [];
+            const attacks = parsed.attacks || [];
+            const mitigations = parsed.mitigations || [];
+            const facts = parsed.facts || [];
             const allNodes = nodes(goals, {
                 fillcolor: "#DB2955",
                 fontcolor: "#ffffff",
@@ -143,6 +292,7 @@ mitigations:
             return [header + allNodes.join("\n") + "\n" + allEdges.join("\n") + "\n" + footer, parsed.title];
         }
         const renderTarget = document.getElementById("renderTarget");
+        const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
         const downloadLink = document.getElementById("downloadLink");
         window["@hpcc-js/wasm"].graphvizSync().then(graphviz => {
@@ -152,7 +302,7 @@ mitigations:
                 const newInput = inputSource.value;
                 if (newInput != lastInput) {
                     lastInput = newInput;
-                    // try {
+                    try {
                         const [dot, title] = convertToDot(newInput);
                         console.log(dot);
                         const svg = graphviz.layout(dot, "svg", "dot");
@@ -169,10 +319,10 @@ mitigations:
                             }
                             lastObjectURL = newObjectURL;
                         }
-                    // } catch (e) {
-                    //     renderTarget.innerText = String(e);
-                    //     downloadLink.removeAttribute("href");
-                    // }
+                        errorTarget.innerText = "";
+                    } catch (e) {
+                        errorTarget.innerText = String(e);
+                    }
                 }
             }
             inputSource.addEventListener("change", rerender, false);
