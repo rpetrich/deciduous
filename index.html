@@ -11,6 +11,7 @@
             padding: 0;
             margin: 0;
             overflow: hidden;
+            font-family: "Helvetica Neue", Helvetica, arial, sans-serif;
         }
         #inputSource {
             position: absolute;
@@ -24,7 +25,7 @@
             outline: 0;
             overflow: auto;
             padding: 6px;
-            border-bottom: 1px solid grey;
+            border-right: 1px solid silver;
             box-sizing: border-box;
             white-space: pre;
         }
@@ -38,6 +39,16 @@
             height: 100vh;
             overflow: auto;
         }
+        .downloadWrapper {
+            padding: 5px;
+        }
+        #downloadLink, #downloadSvgLink {
+            float: right;
+            margin: 5px;
+        }
+        .copyright {
+            text-align: center;
+        }
         @media print {
             .contentArea {
                 position: static;
@@ -47,6 +58,9 @@
                 overflow: visible;
             }
             #inputSource {
+                display: none;
+            }
+            .downloadWrapper {
                 display: none;
             }
         }
@@ -101,9 +115,7 @@ attacks:
 - ssh_to_public_machine: SSH to an accessible machine
   from:
   - compromise_admin_creds: '#yolosec'
-    ungrouped: true
   - compromise_aws_creds:
-    ungrouped: true
   - intercept_2fa
 - lateral_movement_to_machine_with_access: Lateral movement to machine with access to target bucket
   from:
@@ -197,8 +209,15 @@ goals:
   - exploit_vulns
   - aws_0day
   - supply_chain_backdoor
+- company_bank_account: Access company bank account
+  from:
+  - intercept_2fa
+
+# filter can be used to show only paths that flow through specific nodes
+filter:
+- s3_asset
 </textarea>
-    <div class="contentArea"><div id="errorTarget">JavaScript is required</div><a id="downloadLink" download="decision-tree.svg"><div id="renderTarget"></div></a></div>
+    <div class="contentArea"><div class="downloadWrapper"><a id="downloadLink" download="decision-tree.dot">Download .dot</a><a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></div><div id="errorTarget">JavaScript is required</div><div id="renderTarget"></div><p class="copyright">&copy; Copyright 2021 Ryan Petrich</p></div>
     <script>
         function wordwrap(text, limit) {
             text = String(text);
@@ -224,10 +243,10 @@ goals:
             return all.join("\n");
         }
         function mangleName(name) {
-            if (/^\d+/.test(name)) {
-                return JSON.stringify(name);
+            if (/^[A-Za-z]\w*$/.test(name)) {
+                return name;
             }
-            return name;
+            return JSON.stringify(name);
         }
         function line(name, properties) {
             const entries = Object.entries(properties);
@@ -236,15 +255,6 @@ goals:
             }
             return name + " [ " + entries.map(([key, value]) => `${key}=${JSON.stringify(value)}`).join(" ") + " ]";
         }
-        function nodes(values, properties) {
-            return values.map(value => {
-                const [name, label] = Object.entries(value)[0];
-                return line(mangleName(name), {
-                    label: wordwrap(label === null ? name : label, 18),
-                    ...properties,
-                });
-            });
-        }
         function parseFrom(raw) {
             if (typeof raw == "object") {
                 const [fromName, label] = Object.entries(raw)[0];
@@ -252,38 +262,11 @@ goals:
             }
             return [String(raw), null, {}];
         }
-        function edges(entries, properties) {
-            return entries.reduce((edges, value) => {
-                const [name] = Object.entries(value)[0];
-                (value.from || []).forEach((from) => {
-                    const [fromName, label, fromProps] = parseFrom(from);
-                    const props = {
-                        ...properties,
-                    };
-                    if (label !== null) {
-                        props.xlabel = wordwrap(label, 20);
-                        props.fontcolor = "#DB2955";
-                    }
-                    if (typeof fromProps.implemented == "boolean" && !fromProps.implemented) {
-                        props.style = "dotted";
-                    }
-                    if (fromProps.backwards) {
-                        props.style = "dotted";
-                        props.color = "#7692FF";
-                        props.weight = "0";
-                        // props.constraint = "false";
-                    } else {
-                        props.rankdir = "TB";
-                    }
-                    edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
-                });
-                return edges;
-            }, []);
-        }
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
             const font = 'Arial'
-            const header = `digraph {
+            const header = `// Generated from https://rpetrich.com/attack-decision-trees/
+digraph {
     // base graph styling
     rankdir="TB";
     splines=true;
@@ -304,6 +287,68 @@ goals:
             const facts = parsed.facts || [];
             const attacks = parsed.attacks || [];
             const mitigations = parsed.mitigations || [];
+            const filter = parsed.filter || [];
+            const subgraphs = [];
+            const forwards = {};
+            const backwards = {};
+            const allNodes = [...facts, ...attacks, ...mitigations, ...goals];
+            for (const node of allNodes) {
+                const [toName] = Object.entries(node)[0];
+                const fromNames = backwards[toName] || (backwards[toName] = []);
+                for (const from of node.from) {
+                    const [fromName, label, props] = parseFrom(from);
+                    if (!from.backwards && !from.ungrouped) {
+                        const toNames = forwards[fromName] || (forwards[fromName] = []);
+                        toNames.push(toName);
+                        fromNames.push(fromName);
+                    }
+                }
+            }
+            function anyDominates(d, n) {
+                // search to see if any nodes in d dominate n
+                // nodes dominate themselves
+                const search = [];
+                const added = {};
+                for (const other of d) {
+                    added[other] = true;
+                    search.push(other);
+                }
+                while ((d = search.shift()) !== undefined) {
+                    if (d === n) {
+                        return true;
+                    }
+                    const others = forwards[d];
+                    if (others !== undefined) {
+                        for (const other of others) {
+                            if (!Object.hasOwnProperty.call(added, other)) {
+                                added[other] = true;
+                                search.push(other);
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            function shouldShow(n) {
+                if (filter.length == 0 || anyDominates(filter, n)) {
+                    return true;
+                }
+                const arrayN = [n];
+                return filter.find(other => anyDominates(arrayN, other));
+            }
+            function nodes(values, properties) {
+                const result = [];
+                for (const value of values) {
+                    const [name, label] = Object.entries(value)[0];
+                    if (shouldShow(name)) {
+                        result.push(line(mangleName(name), {
+                            label: wordwrap(label === null ? name : label, 18),
+                            ...properties,
+                        }));
+                    }
+                }
+                return result;
+            }
             const allNodeLines = [
                 `// facts`,
                 ...nodes(facts, {
@@ -323,39 +368,82 @@ goals:
                     fontcolor: "#ffffff",
                 })
             ];
-            const allEdgeLines = edges(goals, {}).concat(edges(attacks, {})).concat(edges(mitigations, {})).concat(edges(facts, {}));
-            const subgraphs = [];
-            const reversedDirection = {};
-            const allNodes = facts.concat(attacks).concat(mitigations);
-            for (const node of allNodes) {
-                const [toName] = Object.entries(node)[0];
-                for (const from of node.from) {
-                    const [fromName, label, props] = parseFrom(from);
-                    if (!from.backwards && !from.ungrouped) {
-                        const toNames = reversedDirection[fromName] || (reversedDirection[fromName] = []);
-                        toNames.push(toName);
+            function edges(entries, properties) {
+                return entries.reduce((edges, value) => {
+                    const [name] = Object.entries(value)[0];
+                    if (!shouldShow(name)) {
+                        return edges;
                     }
-                }
+                    (value.from || []).forEach((from) => {
+                        const [fromName, label, fromProps] = parseFrom(from);
+                        if (!shouldShow(fromName)) {
+                            return;
+                        }
+                        const props = {
+                            ...properties,
+                        };
+                        if (label !== null) {
+                            props.xlabel = wordwrap(label, 20);
+                            props.fontcolor = "#DB2955";
+                        }
+                        if (typeof fromProps.implemented == "boolean" && !fromProps.implemented) {
+                            props.style = "dotted";
+                        }
+                        if (fromProps.backwards) {
+                            props.style = "dotted";
+                            props.color = "#7692FF";
+                            props.weight = "0";
+                        }
+                        edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
+                    });
+                    return edges;
+                }, []);
             }
-            for (const [fromName, toNames] of Object.entries(reversedDirection)) {
-                if (toNames.length > 1) {
+            const allEdgeLines = [...edges(goals, {}), ...edges(attacks, {}), ...edges(mitigations, {}), ...edges(facts, {})];
+            const goalNames = goals.map((goal) => {
+                const [goalName] = Object.entries(goal)[0];
+                return goalName;
+            });
+            for (const [fromName, toNames] of Object.entries(forwards)) {
+                if (!shouldShow(fromName)) {
+                    continue;
+                }
+                const copy = toNames.concat();
+                const filteredToNames = [];
+                for (let i = 0; i < toNames.length; i++) {
+                    copy.splice(i, 1);
+                    if (!anyDominates(copy, toNames[i]) && goalNames.indexOf(toNames[i]) == -1 && shouldShow(toNames[i])) {
+                        filteredToNames.push(toNames[i]);
+                    }
+                    copy.splice(i, 0, toNames[i]);
+                }
+                if (filteredToNames.length > 1) {
                     subgraphs.push(`    subgraph ${mangleName(fromName)}_order {
         rank=same;
-        rankdir=TB;
-        ${toNames.map(toName => mangleName(toName) + ";").join("\n        ")}
+        ${filteredToNames.map(toName => mangleName(toName) + ";").join("\n        ")}
     }
-    ${toNames.map(mangleName).join(" -> ")} [ style="invis" ]`);
+    ${line(filteredToNames.map(mangleName).join(" -> "), { style: "invis" })}`);
                 }
             }
+            const shownGoals = goalNames.filter(shouldShow);
+            if (shownGoals > 1) {
+
+                subgraphs.push(`    subgraph goal_order {
+        rank=same;
+        ${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
+    }`);
+                subgraphs.push("    " + line(shownGoals.join(" -> "), { style: "invis" }));
+            }
+            subgraphs.push(`    { rank=min; reality; }`);
             for (const node of allNodes) {
                 const [toName] = Object.entries(node)[0];
-                if (!reversedDirection[toName]) {
-                    for (const goal of goals) {
-                    const [goalName] = Object.entries(goal)[0];
-                        subgraphs.push(`    ${mangleName(toName)} -> ${mangleName(goalName)} [ style="invis" ]`);
+                if (shouldShow(toName) && !forwards[toName] && shownGoals.indexOf(toName) === -1) {
+                    for (const goalName of shownGoals) {
+                        subgraphs.push("    " + line(mangleName(toName) + " -> " + mangleName(goalName), { style: "invis", weight: 0 }));
                     }
                 }
             }
+            subgraphs.push(`    { rank=max; ${shownGoals.map(goalName => mangleName(goalName) + "; ").join("")}}`);
             const footer = "\n\n}\n";
             return [header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n")  + footer, parsed.title];
         }
@@ -363,23 +451,22 @@ goals:
         const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
         const downloadLink = document.getElementById("downloadLink");
+        const downloadSvgLink = document.getElementById("downloadSvgLink");
         window["@hpcc-js/wasm"].graphvizSync().then(graphviz => {
             let lastInput = "";
             let lastObjectURL = "";
+            let lastSvgObjectURL = "";
             function rerender() {
                 const newInput = inputSource.value;
                 if (newInput != lastInput) {
                     lastInput = newInput;
                     try {
                         const [dot, title] = convertToDot(newInput);
+                        // console.log(dot);
                         document.title = title;
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
                         if (window.File && URL.createObjectURL) {
-                            // const file = new File([svg], "graph.svg", {
-                            //     "type": "image/svg+xml",
-                            // });
-                            // downloadLink.download = title + ".svg";
                             const file = new File([dot], "graph.dot", {
                                 "type": "text/vnd.graphviz",
                             });
@@ -390,6 +477,16 @@ goals:
                                 URL.revokeObjectURL(lastObjectURL);
                             }
                             lastObjectURL = newObjectURL;
+                            const svgFile = new File([svg], "graph.svg", {
+                                "type": "image/svg+xml",
+                            });
+                            downloadSvgLink.download = title + ".svg";
+                            const newSvgObjectURL = URL.createObjectURL(svgFile);
+                            downloadSvgLink.href = newSvgObjectURL;
+                            if (lastSvgObjectURL != "") {
+                                URL.revokeObjectURL(lastSvgObjectURL);
+                            }
+                            lastSvgObjectURL = newSvgObjectURL;
                         }
                         errorTarget.innerText = "";
                     } catch (e) {
