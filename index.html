@@ -317,6 +317,7 @@ digraph {
             const filter = parsed.filter || [];
             const subgraphs = [];
             const forwards = {};
+            const forwardsAll = {};
             const backwards = {};
             const allNodes = [...facts, ...attacks, ...mitigations, ...goals];
             for (const node of allNodes) {
@@ -329,9 +330,11 @@ digraph {
                         toNames.push(toName);
                         fromNames.push(fromName);
                     }
+                    const toNames = forwardsAll[fromName] || (forwardsAll[fromName] = []);
+                    toNames.push(toName);
                 }
             }
-            function anyDominates(d, n) {
+            function anyDominates(forwards, d, n) {
                 // search to see if any nodes in d dominate n
                 // nodes dominate themselves
                 const search = [];
@@ -357,11 +360,11 @@ digraph {
                 return false;
             }
             function shouldShow(n) {
-                if (filter.length == 0 || anyDominates(filter, n)) {
+                if (filter.length == 0 || anyDominates(forwardsAll, filter, n)) {
                     return true;
                 }
                 const arrayN = [n];
-                return filter.find(other => anyDominates(arrayN, other));
+                return filter.find(other => anyDominates(forwardsAll, arrayN, other));
             }
             function nodes(values, properties) {
                 const result = [];
@@ -439,7 +442,7 @@ digraph {
                 const filteredToNames = [];
                 for (let i = 0; i < toNames.length; i++) {
                     copy.splice(i, 1);
-                    if (!anyDominates(copy, toNames[i]) && goalNames.indexOf(toNames[i]) == -1 && shouldShow(toNames[i])) {
+                    if (!anyDominates(forwards, copy, toNames[i]) && goalNames.indexOf(toNames[i]) == -1 && shouldShow(toNames[i])) {
                         filteredToNames.push(toNames[i]);
                     }
                     copy.splice(i, 0, toNames[i]);
