@@ -262,10 +262,37 @@ filter:
             }
             return [String(raw), null, {}];
         }
+        const themes = {
+            "default": {
+                "edge": "#2B303A",
+                "edge-text": "#DB2955",
+                "backwards-edge": "#7692FF",
+                "reality-fill": "#2B303A",
+                "reality-text": "#FFFFFF",
+                "fact-fill": "#C6CCD2",
+                "attack-fill": "#ED96AC",
+                "mitigation-fill": "#ABD2FA",
+                "goal-fill": "#DB2955",
+                "goal-text": "#FFFFFF",
+            },
+            "logo": {
+                "edge": "#2B303A",
+                "edge-text": "#A4004A",
+                "backwards-edge": "#7692FF",
+                "reality-fill": "#2B303A",
+                "reality-text": "#FFFFFF",
+                "fact-fill": "#C6CCD2",
+                "attack-fill": "#FF92C3",
+                "mitigation-fill": "#8DB5D9",
+                "goal-fill": "#624CAA",
+                "goal-text": "#FFFFFF",
+            },
+        }
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
             const font = 'Arial'
-            const header = `// Generated from https://rpetrich.com/attack-decision-trees/
+            const theme = themes[Object.hasOwnProperty.call(themes, parsed.theme) ? parsed.theme : "default"];
+            const header = `// Generated from https://swagitda.com/deciduous/
 digraph {
     // base graph styling
     rankdir="TB";
@@ -277,10 +304,10 @@ digraph {
     labelloc="t";
     fontname=${JSON.stringify(font)};
     node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
-    edge [ fontname=${JSON.stringify(font)} color="#2B303A" ]
+    edge [ fontname=${JSON.stringify(font)} color="${theme["edge"]}" ]
 
     // is reality a hologram?
-    reality [ label="Reality" fillcolor="#2B303A" fontcolor="#ffffff" ]
+    reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${theme["reality-text"]}" ]
 
 `;
             const goals = parsed.goals || [];
@@ -352,20 +379,20 @@ digraph {
             const allNodeLines = [
                 `// facts`,
                 ...nodes(facts, {
-                    fillcolor: "#C6CCD2",
+                    fillcolor: theme["fact-fill"],
                 }),
                 `// attacks`,
                 ...nodes(attacks, {
-                    fillcolor: "#ED96AC",
+                    fillcolor: theme["attack-fill"],
                 }),
                 `// mitigations`,
                 ...nodes(mitigations, {
-                    fillcolor: "#ABD2FA",
+                    fillcolor: theme["mitigation-fill"],
                 }),
                 `// goals`,
                 ...nodes(goals, {
-                    fillcolor: "#DB2955",
-                    fontcolor: "#ffffff",
+                    fillcolor: theme["goal-fill"],
+                    fontcolor: theme["goal-text"],
                 })
             ];
             function edges(entries, properties) {
@@ -384,14 +411,14 @@ digraph {
                         };
                         if (label !== null) {
                             props.xlabel = wordwrap(label, 20);
-                            props.fontcolor = "#DB2955";
+                            props.fontcolor = theme["edge-text"];
                         }
                         if (typeof fromProps.implemented == "boolean" && !fromProps.implemented) {
                             props.style = "dotted";
                         }
                         if (fromProps.backwards) {
                             props.style = "dotted";
-                            props.color = "#7692FF";
+                            props.color = theme["backwards-edge"];
                             props.weight = "0";
                         }
                         edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
