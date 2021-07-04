@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Attack Decision Trees</title>
+    <title>Deciduous - Security Decision Tree Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <style type="text/css">
@@ -463,7 +463,7 @@ digraph {
                     try {
                         const [dot, title] = convertToDot(newInput);
                         // console.log(dot);
-                        document.title = title;
+                        document.title = `Deciduous - Security Decision Tree Generator (${title})`;
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
                         if (window.File && URL.createObjectURL) {
