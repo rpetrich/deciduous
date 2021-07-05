@@ -49,13 +49,21 @@
             height: 100vh;
             overflow: auto;
             font-family: 'Josefin Sans', sans-serif;
-            font-size:  1.2em;
+        }
+        .right-header {
+            display: flex;
+        }
+        .logo {
+            margin-right: 1em;
+            margin-bottom: 1em;
         }
         .downloadWrapper {
             padding: 5px;
+            flex:  1;
         }
         #downloadLink, #downloadSvgLink {
             float: right;
+            top: 0;
             margin: 5px;
         }
         .copyright {
@@ -235,13 +243,15 @@ filter:
 - s3_asset
 </textarea>
     <div class="contentArea">
-        <div class="logo">
-            <img src="./deciduous-logo.png" alt="Deciduous logo" height="100">
-        </div>
-        <div class="downloadWrapper">
-            <a id="downloadLink" download="decision-tree.dot">Download .dot</a>
-            <a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>
-            <p>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></p>
+        <div class="right-header">
+            <div class="logo">
+                <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198">
+            </div>
+            <div class="downloadWrapper">
+                <p>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></p>
+                <a id="downloadLink" download="decision-tree.dot">Download .dot</a>
+                <a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>
+            </div>
         </div>
         <div id="errorTarget">JavaScript is required</div>
         <div id="renderTarget"></div>
