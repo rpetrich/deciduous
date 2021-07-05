@@ -366,13 +366,16 @@ digraph {
                 const arrayN = [n];
                 return filter.find(other => anyDominates(forwardsAll, arrayN, other));
             }
+            function defaultLabelForName(name) {
+                return name.replace(/_/g, " ").replace(/^[a-z]/, c => c.toUpperCase());
+            }
             function nodes(values, properties) {
                 const result = [];
                 for (const value of values) {
                     const [name, label] = Object.entries(value)[0];
                     if (shouldShow(name)) {
                         result.push(line(mangleName(name), {
-                            label: wordwrap(label === null ? name : label, 18),
+                            label: wordwrap(label === null ? defaultLabelForName(name) : label, 18),
                             ...properties,
                         }));
                     }
