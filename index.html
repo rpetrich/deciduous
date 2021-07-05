@@ -86,10 +86,10 @@ attacks:
 - bucket_search: AWS public buckets search
   from:
   - disallow_crawling
-- brute_force: Brute force
+- brute_force:
   from:
   - private_bucket
-- phishing: Phishing
+- phishing:
   from:
   - private_bucket
   - internal_only_bucket:
@@ -100,7 +100,7 @@ attacks:
   from:
   - brute_force
   - phishing
-- analyze_web_client:  Manually analyze web client for access control misconfig
+- analyze_web_client: Manually analyze web client for access control misconfig
   from:
   - lock_down_acls
 - compromise_admin_creds: Compromise admin creds
@@ -139,7 +139,7 @@ attacks:
 - exploit_known_vulns: Exploit known 3rd party library vulns
   from:
   - find_systems_with_access
-- buy_0day: Buy 0day
+- buy_0day:
   from:
   - vuln_scanning
 - discover_0day: Manual discovery of 0day
