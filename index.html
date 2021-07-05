@@ -6,6 +6,10 @@
     <title>Deciduous - Security Decision Tree Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap" rel="stylesheet"> 
     <style type="text/css">
         body, html {
             padding: 0;
@@ -13,6 +17,12 @@
             overflow: hidden;
             font-family: "Helvetica Neue", Helvetica, arial, sans-serif;
         }
+        a {
+            color: #1B2CC1;
+        }
+        a:visited {
+            color: #FF499B;
+        } 
         #inputSource {
             position: absolute;
             width: 40%;
@@ -38,6 +48,8 @@
             width: 60%;
             height: 100vh;
             overflow: auto;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size:  1.2em;
         }
         .downloadWrapper {
             padding: 5px;
@@ -50,10 +62,15 @@
             text-align: center;
         }
         @media print {
-            .contentArea {
-                position: static;
+            .logo {
+                position: relative;
                 left: 0;
-                width: auto;
+                top: 0;
+            }
+            .contentArea {
+                position: absolute;
+                left: 0;
+                width: 100%;
                 height: auto;
                 overflow: visible;
             }
@@ -217,7 +234,19 @@ goals:
 filter:
 - s3_asset
 </textarea>
-    <div class="contentArea"><div class="downloadWrapper"><a id="downloadLink" download="decision-tree.dot">Download .dot</a><a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></div><div id="errorTarget">JavaScript is required</div><div id="renderTarget"></div><p class="copyright">&copy; Copyright 2021 Ryan Petrich</p></div>
+    <div class="contentArea">
+        <div class="logo">
+            <img src="./deciduous-logo.png" alt="Deciduous logo" height="100">
+        </div>
+        <div class="downloadWrapper">
+            <a id="downloadLink" download="decision-tree.dot">Download .dot</a>
+            <a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>
+            <p>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></p>
+        </div>
+        <div id="errorTarget">JavaScript is required</div>
+        <div id="renderTarget"></div>
+        <p class="copyright">&copy; Copyright 2021 Ryan Petrich</p>
+    </div>
     <script>
         function wordwrap(text, limit) {
             text = String(text);
