@@ -31,7 +31,7 @@
             height: 100vh;
             margin: 0;
             font-size: 12pt;
-            padding: 6px;
+            padding: 20px;
             line-height: 20px;
             box-sizing: border-box;
             overflow: auto;
@@ -47,15 +47,12 @@
             outline: 0;
             border-right: 1px solid silver;
             z-index: 1;
-            color: rgba(0,0,0,30%);
+            color: transparent;
             background: transparent;
             caret-color: black;
         }
         #highlighting {
             z-index: 0;
-        }
-        #inputHighlighted {
-            padding-bottom: 6px!important;
         }
         #inputSource, code {
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -76,6 +73,8 @@
         }
         .right-header {
             display: flex;
+            width: 100%;
+            height: auto;
         }
         .logo {
             margin-right: 1em;
@@ -90,6 +89,19 @@
             top: 0;
             margin: 5px;
         }
+        #renderTarget {
+            display: inline-block;
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+            vertical-align: top;
+        }
+        svg {
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
         .copyright {
             text-align: center;
         }
@@ -100,38 +112,53 @@
             color: grey;
         }
         #highlighting .attacks, #highlighting .attack {
-            color: #b30050;
+            color: #ff1c82;
         }
         #highlighting .mitigations, #highlighting .mitigation {
-            color: #3270a6;
+            color: #2b56b5;
         }
         #highlighting .facts, #highlighting .fact {
-            color: #2B303A;
+            color: #1b0533;
         }
         #highlighting .goals, #highlighting .goal {
-            color: #4d32a6;
+            color: #5f00c2;
         }
         #highlighting .comment {
         }
         @media print {
             .logo {
-                position: relative;
+                position: absolute;
                 left: 0;
                 top: 0;
             }
             .contentArea {
                 position: absolute;
-                left: 0;
                 width: 100%;
                 height: auto;
                 overflow: visible;
             }
+            svg {
+                position:fixed; 
+                top:0; 
+                bottom:0; 
+                left:0; 
+                right:0;
+                width: 100%;
+                height: 100%;
+            }
             #inputSource {
                 display: none;
+            }
+            #inputHighlighted {
+                display:  none;
             }
             .downloadWrapper {
                 display: none;
             }
+            .copyright {
+                position: fixed;
+                bottom: 0;
+
         }
     </style>
 </head>
@@ -300,7 +327,7 @@ filter:
         </div>
         <div id="errorTarget">JavaScript is required</div>
         <div id="renderTarget"></div>
-        <p class="copyright">&copy; Copyright 2021 Ryan Petrich</p>
+        <p class="copyright">&copy; Copyright 2021 Ryan Petrich & Kelly Shortridge</p>
     </div>
     <script>
         function wordwrap(text, limit) {
@@ -361,14 +388,14 @@ filter:
             },
             "default": {
                 "edge": "#2B303A",
-                "edge-text": "#A4004A",
+                "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
-                "reality-fill": "#2B303A",
+                "reality-fill": "#272727",
                 "reality-text": "#FFFFFF",
-                "fact-fill": "#C6CCD2",
-                "attack-fill": "#FF92C3",
-                "mitigation-fill": "#8DB5D9",
-                "goal-fill": "#624CAA",
+                "fact-fill": "#D2D5DD",
+                "attack-fill": "#ffa6d5",
+                "mitigation-fill": "#B9D6F2",
+                "goal-fill": "#5f00c2",
                 "goal-text": "#FFFFFF",
             },
         }
@@ -388,7 +415,7 @@ digraph {
     labelloc="t";
     fontname=${JSON.stringify(font)};
     node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
-    edge [ fontname=${JSON.stringify(font)} color="${theme["edge"]}" ]
+    edge [ fontname=${JSON.stringify(font)} fontsize=12 color="${theme["edge"]}" ]
 
     // is reality a hologram?
     reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${theme["reality-text"]}" ]
@@ -621,6 +648,12 @@ digraph {
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
+                        const svgElement = renderTarget.querySelector("svg");
+                        if (svgElement) {
+                            const scale = 0.75;
+                            svgElement.setAttribute("width", parseInt(svgElement.getAttribute("width"), 10) * scale + "pt");
+                            svgElement.setAttribute("height", parseInt(svgElement.getAttribute("height"), 10) * scale + "pt");
+                        }
                         if (window.File && URL.createObjectURL) {
                             const file = new File([dot], "graph.dot", {
                                 "type": "text/vnd.graphviz",
@@ -644,7 +677,7 @@ digraph {
                             lastSvgObjectURL = newSvgObjectURL;
                         }
                         for (const title of renderTarget.querySelectorAll("title")) {
-                            title.parentNode.style.cursor = "hand";
+                            title.parentNode.style.cursor = "pointer";
                             title.parentNode.addEventListener("click", () => {
                                 const node = title.textContent;
                                 const index = lastInput.indexOf("\n- " + node);
