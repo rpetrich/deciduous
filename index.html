@@ -588,30 +588,68 @@ digraph {
                     lastInput = newInput;
                     try {
                         const [dot, title, types] = convertToDot(newInput);
+                        // Syntax highlighting
                         types["attacks"] = "attacks";
                         types["mitigations"] = "mitigations";
                         types["goals"] = "goals";
                         types["facts"] = "facts";
                         types["reality"] = "facts";
-                        const fragment = document.createDocumentFragment();
                         let current = "";
+                        let i = 0;
+                        const childNodes = inputHighlighted.childNodes;
+                        function insertTextNode(text) {
+                            if (i < childNodes.length) {
+                                const node = childNodes[i];
+                                if (node.nodeType === Node.TEXT_NODE) {
+                                    if (node.textContent !== text) {
+                                        node.textContent = text;
+                                    }
+                                } else {
+                                    inputHighlighted.replaceChild(document.createTextNode(text), node);
+                                }
+                            } else {
+                                inputHighlighted.appendChild(document.createTextNode(text));
+                            }
+                            i++;
+                        }
+                        function insertSpan(text, className) {
+                            if (i < childNodes.length) {
+                                const node = childNodes[i];
+                                if (node.nodeType === Node.ELEMENT_NODE) {
+                                    if (node.textContent !== text) {
+                                        node.textContent = text;
+                                    }
+                                    if (node.className !== className) {
+                                        node.className = className
+                                    }
+                                } else {
+                                    const span = document.createElement("span");
+                                    span.className = className;
+                                    span.textContent = text;
+                                    inputHighlighted.replaceChild(span, node);
+                                }
+                            } else {
+                                const span = document.createElement("span");
+                                span.className = className;
+                                span.textContent = text;
+                                inputHighlighted.appendChild(span);
+                            }
+                            i++;
+                        }
                         for (const token of (newInput[newInput.length-1] == "\n" ? newInput + " " : newInput).split(/\b/)) {
                             if (Object.hasOwnProperty.call(types, token)) {
-                                fragment.appendChild(document.createTextNode(current));
+                                insertTextNode(current);
                                 current = "";
-                                const span = document.createElement("span");
-                                span.appendChild(document.createTextNode(token));
-                                span.className = types[token];
-                                fragment.appendChild(span);
+                                insertSpan(token, types[token]);
                             } else {
                                 current += token;
                             }
                         }
-                        fragment.appendChild(document.createTextNode(current));
-                        while (inputHighlighted.firstChild) {
-                            inputHighlighted.removeChild(inputHighlighted.firstChild);
+                        insertTextNode(current);
+                        while (i < childNodes.length) {
+                            inputHighlighted.removeChild(childNodes[i]);
                         }
-                        inputHighlighted.appendChild(fragment);
+                        // Resync line height
                         const highlightedHeight = inputHighlighted.getBoundingClientRect().height;
                         const inputHeight = inputSource.scrollHeight;
                         if (highlightedHeight > inputHeight) {
@@ -619,9 +657,11 @@ digraph {
                             highlighting.style.lineHeight = "19px";
                         }
                         // console.log(dot);
+                        // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
+                        // Create a download link
                         if (window.File && URL.createObjectURL) {
                             const file = new File([dot], "graph.dot", {
                                 "type": "text/vnd.graphviz",
@@ -644,6 +684,7 @@ digraph {
                             }
                             lastSvgObjectURL = newSvgObjectURL;
                         }
+                        // Add quick linky links
                         for (const title of renderTarget.querySelectorAll("title")) {
                             title.parentNode.style.cursor = "hand";
                             title.parentNode.addEventListener("click", () => {
@@ -659,6 +700,7 @@ digraph {
                                 }
                             }, false);
                         }
+                        // Clear any error text
                         errorTarget.innerText = "";
                     } catch (e) {
                         errorTarget.innerText = String(e);
