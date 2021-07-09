@@ -615,6 +615,9 @@ digraph {
                 const newInput = inputSource.value;
                 if (newInput != lastInput) {
                     lastInput = newInput;
+                    if (window.localStorage) {
+                        localStorage.setItem("deciduous-content", newInput);
+                    }
                     inputHighlighted.innerHTML = Prism.highlight(newInput[newInput.length-1] == "\n" ? newInput + " " : newInput, Prism.languages.yaml, "yaml");
                     try {
                         const [dot, title, types] = convertToDot(newInput);
@@ -706,6 +709,12 @@ digraph {
             inputSource.addEventListener("blur", syncScroll, false);
             inputSource.addEventListener("keydown", syncScroll, false);
             inputSource.addEventListener("keyup", syncScroll, false);
+            if (window.localStorage) {
+                const content = localStorage.getItem("deciduous-content");
+                if (content !== null && content !== "") {
+                    inputSource.value = content;
+                }
+            }
             rerender();
         });
     </script>
