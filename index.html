@@ -28,9 +28,7 @@
             width: 40%;
             height: 100vh;
             margin: 0;
-            font-size: 12pt;
             padding: 20px;
-            line-height: 20px;
             box-sizing: border-box;
             overflow: auto;
             white-space: pre;
@@ -682,10 +680,10 @@ digraph {
                         // Resync line height
                         const highlightedHeight = inputHighlighted.getBoundingClientRect().height;
                         const inputHeight = inputSource.scrollHeight;
-                        if (highlightedHeight > inputHeight) {
+                        // if (highlightedHeight > inputHeight) {
                             // line height hack for Firefox+Windows
-                            highlighting.style.lineHeight = "19px";
-                        }
+                            // highlighting.style.lineHeight = "1.2";
+                        // }
                         // console.log(dot);
                         // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
