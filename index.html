@@ -6,8 +6,6 @@
     <title>Deciduous - Security Decision Tree Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/components/prism-yaml.min.js"></script>
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -313,7 +311,7 @@ goals:
 filter:
 - s3_asset
 </textarea>
-<pre id="highlighting" aria-hidden="true"><code class="language-yaml" id="inputHighlighted"></code></pre>
+<pre id="highlighting" aria-hidden="true"><code id="inputHighlighted"></code></pre>
     <div class="contentArea">
         <div class="right-header">
             <div class="logo">
@@ -618,29 +616,70 @@ digraph {
                     if (window.localStorage) {
                         localStorage.setItem("deciduous-content", newInput);
                     }
-                    inputHighlighted.innerHTML = Prism.highlight(newInput[newInput.length-1] == "\n" ? newInput + " " : newInput, Prism.languages.yaml, "yaml");
                     try {
                         const [dot, title, types] = convertToDot(newInput);
+                        // Syntax highlighting
                         types["attacks"] = "attacks";
                         types["mitigations"] = "mitigations";
                         types["goals"] = "goals";
                         types["facts"] = "facts";
-                        for (const element of inputHighlighted.childNodes) {
-                            if (element.nodeType === 3) {
-                                const text = element.nodeValue.trim();
-                                if (Object.hasOwnProperty.call(types, text)) {
+                        types["reality"] = "facts";
+                        let current = "";
+                        let i = 0;
+                        const childNodes = inputHighlighted.childNodes;
+                        function insertTextNode(text) {
+                            if (i < childNodes.length) {
+                                const node = childNodes[i];
+                                if (node.nodeType === Node.TEXT_NODE) {
+                                    if (node.textContent !== text) {
+                                        node.textContent = text;
+                                    }
+                                } else {
+                                    inputHighlighted.replaceChild(document.createTextNode(text), node);
+                                }
+                            } else {
+                                inputHighlighted.appendChild(document.createTextNode(text));
+                            }
+                            i++;
+                        }
+                        function insertSpan(text, className) {
+                            if (i < childNodes.length) {
+                                const node = childNodes[i];
+                                if (node.nodeType === Node.ELEMENT_NODE) {
+                                    if (node.textContent !== text) {
+                                        node.textContent = text;
+                                    }
+                                    if (node.className !== className) {
+                                        node.className = className
+                                    }
+                                } else {
                                     const span = document.createElement("span");
-                                    span.className = types[text];
-                                    inputHighlighted.replaceChild(span, element);
-                                    span.appendChild(element);
+                                    span.className = className;
+                                    span.textContent = text;
+                                    inputHighlighted.replaceChild(span, node);
                                 }
-                            } else if (element.nodeType === 1) {
-                                const text = element.innerText;
-                                if (Object.hasOwnProperty.call(types, text)) {
-                                    element.className += " " + types[text];
-                                }
+                            } else {
+                                const span = document.createElement("span");
+                                span.className = className;
+                                span.textContent = text;
+                                inputHighlighted.appendChild(span);
+                            }
+                            i++;
+                        }
+                        for (const token of (newInput[newInput.length-1] == "\n" ? newInput + " " : newInput).split(/\b/)) {
+                            if (Object.hasOwnProperty.call(types, token)) {
+                                insertTextNode(current);
+                                current = "";
+                                insertSpan(token, types[token]);
+                            } else {
+                                current += token;
                             }
                         }
+                        insertTextNode(current);
+                        while (i < childNodes.length) {
+                            inputHighlighted.removeChild(childNodes[i]);
+                        }
+                        // Resync line height
                         const highlightedHeight = inputHighlighted.getBoundingClientRect().height;
                         const inputHeight = inputSource.scrollHeight;
                         if (highlightedHeight > inputHeight) {
@@ -648,6 +687,7 @@ digraph {
                             highlighting.style.lineHeight = "19px";
                         }
                         // console.log(dot);
+                        // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
@@ -657,6 +697,7 @@ digraph {
                             svgElement.setAttribute("width", parseInt(svgElement.getAttribute("width"), 10) * scale + "pt");
                             svgElement.setAttribute("height", parseInt(svgElement.getAttribute("height"), 10) * scale + "pt");
                         }
+                        // Create a download link
                         if (window.File && URL.createObjectURL) {
                             const file = new File([dot], "graph.dot", {
                                 "type": "text/vnd.graphviz",
@@ -679,6 +720,7 @@ digraph {
                             }
                             lastSvgObjectURL = newSvgObjectURL;
                         }
+                        // Add quick linky links
                         for (const title of renderTarget.querySelectorAll("title")) {
                             title.parentNode.style.cursor = "pointer";
                             title.parentNode.addEventListener("click", () => {
@@ -694,6 +736,7 @@ digraph {
                                 }
                             }, false);
                         }
+                        // Clear any error text
                         errorTarget.innerText = "";
                     } catch (e) {
                         errorTarget.innerText = String(e);
