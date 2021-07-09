@@ -32,23 +32,30 @@
             margin: 0;
             font-size: 12pt;
             padding: 6px;
+            line-height: 20px;
             box-sizing: border-box;
             overflow: auto;
             white-space: pre;
+            text-size-adjust: none;
         }
         #inputSource {
             resize: none;
             border: medium none;
             appearance: none;
+            -moz-appearance: none;
+            -webkit-appearance: none;
             outline: 0;
             border-right: 1px solid silver;
             z-index: 1;
-            color: transparent;
+            color: rgba(0,0,0,30%);
             background: transparent;
             caret-color: black;
         }
         #highlighting {
             z-index: 0;
+        }
+        #inputHighlighted {
+            padding-bottom: 6px!important;
         }
         #inputSource, code {
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -602,6 +609,12 @@ digraph {
                                 }
                             }
                         }
+                        const highlightedHeight = inputHighlighted.getBoundingClientRect().height;
+                        const inputHeight = inputSource.scrollHeight;
+                        if (highlightedHeight > inputHeight) {
+                            // line height hack for Firefox+Windows
+                            highlighting.style.lineHeight = "19px";
+                        }
                         // console.log(dot);
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
                         const svg = graphviz.layout(dot, "svg", "dot");
@@ -638,6 +651,8 @@ digraph {
                                     inputSource.selectionEnd = inputSource.selectionStart = index + 3;
                                     inputSource.focus();
                                     inputSource.selectionEnd = index + 3 + node.length;
+                                    syncScroll();
+                                    setTimeout(syncScroll, 0);
                                 }
                             }, false);
                         }
@@ -650,6 +665,12 @@ digraph {
             inputSource.addEventListener("change", rerender, false);
             inputSource.addEventListener("input", rerender, false);
             inputSource.addEventListener("scroll", syncScroll, false);
+            inputSource.addEventListener("select", syncScroll, false);
+            inputSource.addEventListener("wheel", syncScroll, false);
+            inputSource.addEventListener("focus", syncScroll, false);
+            inputSource.addEventListener("blur", syncScroll, false);
+            inputSource.addEventListener("keydown", syncScroll, false);
+            inputSource.addEventListener("keyup", syncScroll, false);
             rerender();
         });
     </script>
