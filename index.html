@@ -408,15 +408,17 @@ digraph {
             for (const node of allNodes) {
                 const [toName] = Object.entries(node)[0];
                 const fromNames = backwards[toName] || (backwards[toName] = []);
-                for (const from of node.from) {
-                    const [fromName, label, props] = parseFrom(from);
-                    if (!from.backwards && !from.ungrouped) {
-                        const toNames = forwards[fromName] || (forwards[fromName] = []);
+                if (node.from) {
+                    for (const from of node.from) {
+                        const [fromName, label, props] = parseFrom(from);
+                        if (!from.backwards && !from.ungrouped) {
+                            const toNames = forwards[fromName] || (forwards[fromName] = []);
+                            toNames.push(toName);
+                            fromNames.push(fromName);
+                        }
+                        const toNames = forwardsAll[fromName] || (forwardsAll[fromName] = []);
                         toNames.push(toName);
-                        fromNames.push(fromName);
                     }
-                    const toNames = forwardsAll[fromName] || (forwardsAll[fromName] = []);
-                    toNames.push(toName);
                 }
             }
             function anyDominates(forwards, d, n) {
