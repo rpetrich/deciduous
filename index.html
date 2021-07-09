@@ -112,7 +112,7 @@
             color: grey;
         }
         #highlighting .attacks, #highlighting .attack {
-            color: #e600ac;
+            color: #ff1c82;
         }
         #highlighting .mitigations, #highlighting .mitigation {
             color: #2b56b5;
@@ -388,14 +388,14 @@ filter:
             },
             "default": {
                 "edge": "#2B303A",
-                "edge-text": "#000dbf",
+                "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
                 "reality-fill": "#272727",
                 "reality-text": "#FFFFFF",
                 "fact-fill": "#D2D5DD",
-                "attack-fill": "#ffade0",
-                "mitigation-fill": "#a3c6ff",
-                "goal-fill": "#6702d1",
+                "attack-fill": "#ffa6d5",
+                "mitigation-fill": "#B9D6F2",
+                "goal-fill": "#5f00c2",
                 "goal-text": "#FFFFFF",
             },
         }
@@ -414,8 +414,8 @@ digraph {
     label=${JSON.stringify(String(parsed.title))};
     labelloc="t";
     fontname=${JSON.stringify(font)};
-    node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} fontsize=14.0 margin=0.2 ]
-    edge [ fontname=${JSON.stringify(font)} fontsize=10 color="${theme["edge"]}" ]
+    node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
+    edge [ fontname=${JSON.stringify(font)} fontsize=12 color="${theme["edge"]}" ]
 
     // is reality a hologram?
     reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${theme["reality-text"]}" ]
