@@ -76,6 +76,8 @@
         }
         .right-header {
             display: flex;
+            width: 100%;
+            height: auto;
         }
         .logo {
             margin-right: 1em;
@@ -129,9 +131,13 @@
             #inputSource {
                 display: none;
             }
+            #inputHighlighted {
+                display:  none;
+            }
             .downloadWrapper {
                 display: none;
             }
+
         }
     </style>
 </head>
@@ -642,7 +648,7 @@ digraph {
                             lastSvgObjectURL = newSvgObjectURL;
                         }
                         for (const title of renderTarget.querySelectorAll("title")) {
-                            title.parentNode.style.cursor = "hand";
+                            title.parentNode.style.cursor = "pointer";
                             title.parentNode.addEventListener("click", () => {
                                 const node = title.textContent;
                                 const index = lastInput.indexOf("\n- " + node);
