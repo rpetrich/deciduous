@@ -31,7 +31,7 @@
             height: 100vh;
             margin: 0;
             font-size: 12pt;
-            padding: 6px;
+            padding: 20px;
             line-height: 20px;
             box-sizing: border-box;
             overflow: auto;
@@ -47,15 +47,12 @@
             outline: 0;
             border-right: 1px solid silver;
             z-index: 1;
-            color: rgba(0,0,0,30%);
+            color: transparent;
             background: transparent;
             caret-color: black;
         }
         #highlighting {
             z-index: 0;
-        }
-        #inputHighlighted {
-            padding-bottom: 6px!important;
         }
         #inputSource, code {
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -115,16 +112,16 @@
             color: grey;
         }
         #highlighting .attacks, #highlighting .attack {
-            color: #b30050;
+            color: #e600ac;
         }
         #highlighting .mitigations, #highlighting .mitigation {
-            color: #3270a6;
+            color: #2b56b5;
         }
         #highlighting .facts, #highlighting .fact {
-            color: #2B303A;
+            color: #1b0533;
         }
         #highlighting .goals, #highlighting .goal {
-            color: #4d32a6;
+            color: #5f00c2;
         }
         #highlighting .comment {
         }
@@ -391,14 +388,14 @@ filter:
             },
             "default": {
                 "edge": "#2B303A",
-                "edge-text": "#A4004A",
+                "edge-text": "#000dbf",
                 "backwards-edge": "#7692FF",
-                "reality-fill": "#2B303A",
+                "reality-fill": "#272727",
                 "reality-text": "#FFFFFF",
-                "fact-fill": "#C6CCD2",
-                "attack-fill": "#FF92C3",
-                "mitigation-fill": "#8DB5D9",
-                "goal-fill": "#624CAA",
+                "fact-fill": "#D2D5DD",
+                "attack-fill": "#ffade0",
+                "mitigation-fill": "#a3c6ff",
+                "goal-fill": "#6702d1",
                 "goal-text": "#FFFFFF",
             },
         }
@@ -417,8 +414,8 @@ digraph {
     label=${JSON.stringify(String(parsed.title))};
     labelloc="t";
     fontname=${JSON.stringify(font)};
-    node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
-    edge [ fontname=${JSON.stringify(font)} color="${theme["edge"]}" ]
+    node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} fontsize=14.0 margin=0.2 ]
+    edge [ fontname=${JSON.stringify(font)} fontsize=10 color="${theme["edge"]}" ]
 
     // is reality a hologram?
     reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${theme["reality-text"]}" ]
@@ -649,6 +646,12 @@ digraph {
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
+                        const svgElement = renderTarget.querySelector("svg");
+                        if (svgElement) {
+                            const scale = 0.75;
+                            svgElement.setAttribute("width", parseInt(svgElement.getAttribute("width"), 10) * scale + "pt");
+                            svgElement.setAttribute("height", parseInt(svgElement.getAttribute("height"), 10) * scale + "pt");
+                        }
                         if (window.File && URL.createObjectURL) {
                             const file = new File([dot], "graph.dot", {
                                 "type": "text/vnd.graphviz",
