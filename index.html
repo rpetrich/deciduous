@@ -687,7 +687,7 @@ digraph {
                         const inputHeight = inputSource.scrollHeight;
                         if (highlightedHeight > inputHeight) {
                             // line height hack for Firefox+Windows
-                            highlighting.style.lineHeight = "19px";
+                            inputSource.style.lineHeight = highlightedHeight*20.01/(inputHeight-40) + "px";
                         }
                         // console.log(dot);
                         // Render SVG into the document
