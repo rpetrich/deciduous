@@ -25,11 +25,31 @@
         }
         a:visited {
             color: #FF499B;
-        } 
-        #inputSource, #highlighting {
+        }
+        #leftPane {
             position: absolute;
             width: 40%;
-            height: 100vh;
+            height: 100%;
+        }
+        .sectionHeader {
+            position: absolute;
+            width: 100%;
+            top: 0px;
+            left: 0px;
+            height: 40px;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 16pt;
+            color: #0E1660;
+            margin: 0;
+            border-bottom: 1px solid silver;
+            padding-left: 20px;
+            padding-top: 9px;
+            box-sizing: border-box;
+        }
+        #inputSource, #highlighting {
+            position: absolute;
+            width: 100%;
+            height: 100%;
             margin: 0;
             font-size: 12pt;
             padding: 20px;
@@ -38,10 +58,11 @@
             overflow: auto;
             white-space: pre;
             text-size-adjust: none;
+            border: medium none;
+            border-top: 40px solid transparent;
         }
         #inputSource {
             resize: none;
-            border: medium none;
             appearance: none;
             -moz-appearance: none;
             -webkit-appearance: none;
@@ -68,7 +89,7 @@
             position: absolute;
             left: 40%;
             width: 60%;
-            height: 100vh;
+            height: 100%;
             overflow: auto;
             font-family: 'Josefin Sans', sans-serif;
         }
@@ -126,6 +147,12 @@
         }
         #highlighting .comment {
         }
+        #dragger {
+            cursor: col-resize;
+            position: absolute;
+            height: 100%;
+            width: 3px;
+        }
         @media print {
             .logo {
                 position: absolute;
@@ -147,11 +174,14 @@
                 width: 100%;
                 height: 100%;
             }
+            #leftPane, #dragger {
+                display: none;
+            }
             #inputSource {
                 display: none;
             }
             #inputHighlighted {
-                display:  none;
+                display: none;
             }
             .downloadWrapper {
                 display: none;
@@ -165,8 +195,10 @@
 </head>
 
 <body>
-    <textarea id="inputSource" spellcheck="false">
-title: Attack Tree for S3 Bucket with Video Recordings
+    <div id="leftPane">
+        <h2 class="sectionHeader">Text Editor</h2>
+        <textarea id="inputSource" spellcheck="false">
+title: (Example) Attack Tree for S3 Bucket with Video Recordings
 
 facts:
 - wayback: API cache (e.g. Wayback Machine)
@@ -314,8 +346,9 @@ goals:
 filter:
 - s3_asset
 </textarea>
-<pre id="highlighting" aria-hidden="true"><code id="inputHighlighted"></code></pre>
-    <div class="contentArea">
+        <pre id="highlighting" aria-hidden="true"><code id="inputHighlighted"></code></pre>
+    </div>
+    <div class="contentArea" id="rightPane">
         <div class="right-header">
             <div class="logo">
                 <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198">
@@ -330,6 +363,7 @@ filter:
         <div id="renderTarget"></div>
         <p class="copyright">&copy; Copyright 2021 Ryan Petrich & Kelly Shortridge</p>
     </div>
+    <div id="dragger"></div>
     <script>
         function wordwrap(text, limit) {
             text = String(text);
@@ -762,6 +796,40 @@ digraph {
                 }
             }
             rerender();
+            // Focus the textarea so that users know it's editable
+            inputSource.selectionStart = inputSource.selectionEnd = 0;
+            inputSource.focus();
+            // Make the dragger draggable
+            const dragger = document.getElementById("dragger");
+            dragger.style.left = "40%";
+            const leftPane = document.getElementById("leftPane");
+            let currentPercentage = 40;
+            if (window.localStorage) {
+                currentPercentage = localStorage.getItem("deciduous-divider") || 40;
+            }
+            function updateDivider(percent) {
+                dragger.style.left = percent + "%";
+                leftPane.style.width = percent + "%";
+                rightPane.style.left = percent + "%";
+                rightPane.style.width = (100 - percent) + "%";
+                currentPercentage = percent;
+            }
+            function mouseMove(e) {
+                const clientWidth = document.body.clientWidth;
+                updateDivider(Math.max(Math.min(e.clientX, clientWidth - 200), 200) * 100 / clientWidth);
+            }
+            function mouseUp(e) {
+                document.body.removeEventListener("mousemove", mouseMove);
+                document.body.removeEventListener("mouseup", mouseUp);
+                if (window.localStorage) {
+                    localStorage.setItem("deciduous-divider", currentPercentage);
+                }
+            }
+            dragger.addEventListener("mousedown", e => {
+                document.body.addEventListener("mousemove", mouseMove, false);
+                document.body.addEventListener("mouseup", mouseUp, false);
+            }, false);
+            updateDivider(currentPercentage);
         });
     </script>
 
