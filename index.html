@@ -653,6 +653,7 @@ digraph {
             let lastInput = "";
             let lastObjectURL = "";
             let lastSvgObjectURL = "";
+            let types = {};
             function rerender() {
                 syncScroll();
                 const newInput = inputSource.value;
@@ -661,9 +662,7 @@ digraph {
                     if (window.localStorage) {
                         localStorage.setItem("deciduous-content", newInput);
                     }
-                    try {
-                        const [dot, title, types] = convertToDot(newInput);
-                        // Syntax highlighting
+                    function updateTextArea(){
                         types["attacks"] = "attacks";
                         types["mitigations"] = "mitigations";
                         types["goals"] = "goals";
@@ -731,6 +730,12 @@ digraph {
                             // line height hack for Firefox+Windows
                             inputSource.style.lineHeight = highlightedHeight*20.01/(inputHeight-40) + "px";
                         }
+                    }
+                    try {
+                        let dot, title;
+                        [dot, title, types] = convertToDot(newInput);
+                        // Syntax highlighting
+                        updateTextArea();
                         // console.log(dot);
                         // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
@@ -785,6 +790,7 @@ digraph {
                         errorTarget.innerText = "";
                     } catch (e) {
                         errorTarget.innerText = String(e);
+                        updateTextArea();
                     }
                 }
             }
