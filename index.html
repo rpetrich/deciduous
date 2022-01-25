@@ -656,6 +656,14 @@ digraph {
             let lastObjectURL = "";
             let lastSvgObjectURL = "";
             let types = {};
+            function selectRange(start, end) {
+                inputSource.blur();
+                inputSource.selectionEnd = inputSource.selectionStart = start;
+                inputSource.focus();
+                inputSource.selectionEnd = end;
+                syncScroll();
+                setTimeout(syncScroll, 0);
+            }
             function rerender() {
                 syncScroll();
                 const newInput = inputSource.value;
@@ -777,14 +785,22 @@ digraph {
                             title.parentNode.style.cursor = "pointer";
                             title.parentNode.addEventListener("click", () => {
                                 const node = title.textContent;
-                                const index = lastInput.indexOf("\n- " + node);
-                                if (index != -1) {
-                                    inputSource.blur();
-                                    inputSource.selectionEnd = inputSource.selectionStart = index + 3;
-                                    inputSource.focus();
-                                    inputSource.selectionEnd = index + 3 + node.length;
-                                    syncScroll();
-                                    setTimeout(syncScroll, 0);
+                                const matches = node.match(/^(\w+)->(\w+)$/);
+                                if (matches) {
+                                    // Select the appropriate "from entry" inside the target attack, mitigation or goal
+                                    const firstIndex = lastInput.indexOf("\n- " + matches[2]);
+                                    if (firstIndex != -1) {
+                                        let secondIndex = lastInput.indexOf("- " + matches[1], firstIndex + 4 + matches[2].length);
+                                        if (secondIndex != -1) {
+                                            selectRange(secondIndex + 2, secondIndex + 2 + matches[1].length);
+                                        }
+                                    }
+                                } else {
+                                    // Select a top level attack, mitigation or goal
+                                    const index = lastInput.indexOf("\n- " + node);
+                                    if (index != -1) {
+                                        selectRange(index + 3, index + 3 + node.length);
+                                    }
                                 }
                             }, false);
                         }
