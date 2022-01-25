@@ -803,6 +803,16 @@ digraph {
                                     }
                                 }
                             }, false);
+                            // Clone edge paths and make them thicker to make them easier to click
+                            if (title.parentNode.getAttribute("class") === "edge") {
+                                const path = title.parentNode.querySelector("path");
+                                if (path) {
+                                    const thickPath = path.cloneNode(true);
+                                    thickPath.setAttribute("stroke", "transparent");
+                                    thickPath.setAttribute("stroke-width", "15px");
+                                    title.parentNode.insertBefore(thickPath, path);
+                                }
+                            }
                         }
                         // Clear any error text
                         errorTarget.innerText = "";
