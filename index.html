@@ -114,7 +114,7 @@
             padding: 5px;
             flex:  1;
         }
-        #downloadLink, #downloadSvgLink {
+        #downloadLink, #downloadSvgLink, #openGistLink {
             float: right;
             top: 0;
             margin: 5px;
@@ -365,6 +365,7 @@ filter:
                 <p>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></p>
                 <a id="downloadLink" download="decision-tree.dot">Download .dot</a>
                 <a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>
+                <a id="openGistLink" href="#">Open GitHub Gist</a>
             </div>
         </div>
         <div id="errorTarget">JavaScript is required</div>
@@ -643,6 +644,7 @@ digraph {
         const inputSource = document.getElementById("inputSource");
         const downloadLink = document.getElementById("downloadLink");
         const downloadSvgLink = document.getElementById("downloadSvgLink");
+        const openGistLink = document.getElementById("openGistLink");
         const inputHighlighted = document.getElementById("inputHighlighted");
         const highlighting = document.getElementById("highlighting");
         function syncScroll() {
@@ -794,8 +796,14 @@ digraph {
                     }
                 }
             }
-            inputSource.addEventListener("change", rerender, false);
-            inputSource.addEventListener("input", rerender, false);
+            function rerenderAndClearHash() {
+                if (location.hash !== "") {
+                    location.hash = "";
+                }
+                rerender();
+            }
+            inputSource.addEventListener("change", rerenderAndClearHash, false);
+            inputSource.addEventListener("input", rerenderAndClearHash, false);
             inputSource.addEventListener("scroll", syncScroll, false);
             inputSource.addEventListener("select", syncScroll, false);
             inputSource.addEventListener("wheel", syncScroll, false);
@@ -803,13 +811,55 @@ digraph {
             inputSource.addEventListener("blur", syncScroll, false);
             inputSource.addEventListener("keydown", syncScroll, false);
             inputSource.addEventListener("keyup", syncScroll, false);
-            if (window.localStorage) {
-                const content = localStorage.getItem("deciduous-content");
-                if (content !== null && content !== "") {
-                    inputSource.value = content;
+            function tryHashRender() {
+                const match = location.hash.match(/^#gist=(\w+)$/);
+                if (match) {
+                    const url = `https://api.github.com/gists/${match[1]}`;
+                    inputSource.value = `# Loading ${url}`;
+                    fetch(url).then(response => response.json()).then(json => {
+                        const files = json.files;
+                        for (const key in files) {
+                            if (/\.yaml$/.test(key)) {
+                                const file = files[key];
+                                if (file.truncated) {
+                                    return fetch(file.raw_url).then(fileResponse => fileResponse.text());
+                                } else {
+                                    return files[key].content;
+                                }
+                            }
+                        }
+                        return `# No yaml in gist ID ${match[1]}`;
+                    }).catch(e => `# Error loading ${url}: ${e}`).then(text => {
+                        inputSource.value = text;
+                        rerender();
+                    });
                 }
             }
+            if (!tryHashRender()) {
+                if (window.localStorage) {
+                    const content = localStorage.getItem("deciduous-content");
+                    if (content !== null && content !== "") {
+                        inputSource.value = content;
+                    }
+                }
+            }
+            window.addEventListener("hashchange", tryHashRender, false);
             rerender();
+            openGistLink.addEventListener("click", (event) => {
+                event.preventDefault();
+                const value = window.prompt("GitHub Gist URL or ID:", "");
+                if (/^[0-9a-f]+$/.test(value)) {
+                    location.hash = `#gist=${value}`;
+                } else {
+                    const match = value.match(/^https:\/\/gist\.github\.com\/\w+\/([0-9a-f]+)$/);
+                    if (match) {
+                        location.hash = `#gist=${match[1]}`;
+                    } else {
+                        return;
+                    }
+                }
+                tryHashRender();
+            }, false)
             // Focus the textarea so that users know it's editable
             inputSource.selectionStart = inputSource.selectionEnd = 0;
             inputSource.focus();
