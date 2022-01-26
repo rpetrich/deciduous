@@ -455,7 +455,7 @@ digraph {
     overlap=false;
     nodesep="0.2";
     ranksep="0.4";
-    label=${JSON.stringify(String(parsed.title))};
+    label=${JSON.stringify(typeof parsed.title === "string" ? parsed.title : "")};
     labelloc="t";
     fontname=${JSON.stringify(font)};
     node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
@@ -574,7 +574,7 @@ digraph {
                         const props = {
                             ...properties,
                         };
-                        if (label !== null) {
+                        if (typeof label === "string") {
                             props.xlabel = wordwrap(label, 20);
                             props.fontcolor = theme["edge-text"];
                         }
@@ -637,7 +637,7 @@ digraph {
             }
             subgraphs.push(`    { rank=max; ${shownGoals.map(goalName => mangleName(goalName) + "; ").join("")}}`);
             const footer = "\n\n}\n";
-            return [header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n")  + footer, parsed.title, types];
+            return [header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n")  + footer, typeof parsed.title === "string" ? parsed.title : "", types];
         }
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
