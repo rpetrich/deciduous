@@ -365,6 +365,7 @@ filter:
                 <p>Inspired by and with example taken from Kelly Shortridge's <a href="https://swagitda.com/blog/posts/security-decision-trees-with-graphviz/">Creating Security Decision Trees With Graphviz</a></p>
                 <a id="downloadLink" download="decision-tree.dot">Download .dot</a>
                 <a id="downloadSvgLink" download="decision-tree.svg">Download .svg</a>
+                <a id="downloadPngLink" href="#" download="decision-tree.png">Download .png</a>
                 <a id="openGistLink" href="#">Import GitHub Gist</a>
             </div>
         </div>
@@ -643,6 +644,7 @@ digraph {
         const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
         const downloadLink = document.getElementById("downloadLink");
+        const downloadPngLink = document.getElementById("downloadPngLink");
         const downloadSvgLink = document.getElementById("downloadSvgLink");
         const openGistLink = document.getElementById("openGistLink");
         const inputHighlighted = document.getElementById("inputHighlighted");
@@ -779,6 +781,7 @@ digraph {
                                 URL.revokeObjectURL(lastSvgObjectURL);
                             }
                             lastSvgObjectURL = newSvgObjectURL;
+                            downloadPngLink.download = title + ".png";
                         }
                         // Add quick linky links
                         for (const title of renderTarget.querySelectorAll("title")) {
@@ -958,6 +961,21 @@ digraph {
                 document.body.addEventListener("mouseup", mouseUp, false);
             }, false);
             updateDivider(currentPercentage);
+            downloadPngLink.addEventListener("mouseover", e => {
+                const canvas = document.createElement("canvas");
+                canvas.width = 640;
+                canvas.height = 480;
+                canvas.style.display = "none";
+                document.body.appendChild(canvas);
+                const image = document.createElement("img");
+                image.src = lastObjectURL;
+                const context = canvas.getContext("2d");
+                context.drawImage(image, 0, 0);
+                canvas.toBlob(blob => {
+                    downloadPngLink.href = URL.createObjectURL(blob);
+                    document.body.removeChild(canvas);
+                });
+            }, false);
         });
     </script>
 
