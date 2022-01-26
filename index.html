@@ -825,7 +825,45 @@ digraph {
             inputSource.addEventListener("wheel", syncScroll, false);
             inputSource.addEventListener("focus", syncScroll, false);
             inputSource.addEventListener("blur", syncScroll, false);
-            inputSource.addEventListener("keydown", syncScroll, false);
+            inputSource.addEventListener("keydown", (e) => {
+                // Tab support
+                if (e.code === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const start = inputSource.selectionStart;
+                    const end = inputSource.selectionEnd;
+                    const beforeText = inputSource.value;
+                    let newline = beforeText.lastIndexOf("\n", start - 1);
+                    if (e.shiftKey) {
+                        // Unindent line two spaces
+                        if (newline + 2 <= beforeText.length && beforeText.slice(newline + 1, newline + 3) === "  ") {
+                            inputSource.value = beforeText.slice(0, newline + 1) + beforeText.slice(newline + 3);
+                            selectRange(start - 2, start - 2);
+                        }
+                    } else {
+                        if (start === end) {
+                            const beforeMatch = beforeText.slice(newline + 1, start).match(/\w+$/);
+                            if (beforeMatch && !/^\w/.test(beforeText.slice(start))) {
+                                for (const key in types) {
+                                    if (key.startsWith(beforeMatch[0]) && key !== beforeMatch[0]) {
+                                        // Autocomplete
+                                        const newText = key.slice(beforeMatch[0].length);
+                                        inputSource.value = beforeText.slice(0, start) + newText + beforeText.slice(end);
+                                        selectRange(start + newText.length, start + newText.length);
+                                        rerender();
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        // Insert two spaces
+                        inputSource.value = beforeText.slice(0, start) + "  " + beforeText.slice(end);
+                        selectRange(start + 2, start + 2);
+                    }
+                    rerender();
+                } else {
+                    syncScroll();
+                }
+            }, false);
             inputSource.addEventListener("keyup", syncScroll, false);
             function tryHashRender() {
                 const match = location.hash.match(/^#gist=(\w+)$/);
