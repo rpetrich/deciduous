@@ -114,7 +114,7 @@
             padding: 5px;
             flex:  1;
         }
-        #downloadLink, #downloadSvgLink, #openGistLink {
+        .downloadWrapper a {
             float: right;
             top: 0;
             margin: 5px;
@@ -657,6 +657,7 @@ digraph {
             let lastInput = "";
             let lastObjectURL = "";
             let lastSvgObjectURL = "";
+            let lastPngObjectURL = "";
             let types = {};
             function selectRange(start, end) {
                 inputSource.blur();
@@ -782,6 +783,10 @@ digraph {
                             }
                             lastSvgObjectURL = newSvgObjectURL;
                             downloadPngLink.download = title + ".png";
+                            if (lastPngObjectURL != "") {
+                                URL.revokeObjectURL(lastPngObjectURL);
+                                lastPngObjectURL = "";
+                            }
                         }
                         // Add quick linky links
                         for (const title of renderTarget.querySelectorAll("title")) {
@@ -962,19 +967,30 @@ digraph {
             }, false);
             updateDivider(currentPercentage);
             downloadPngLink.addEventListener("mouseover", e => {
-                const canvas = document.createElement("canvas");
-                canvas.width = 640;
-                canvas.height = 480;
-                canvas.style.display = "none";
-                document.body.appendChild(canvas);
-                const image = document.createElement("img");
-                image.src = lastObjectURL;
-                const context = canvas.getContext("2d");
-                context.drawImage(image, 0, 0);
-                canvas.toBlob(blob => {
-                    downloadPngLink.href = URL.createObjectURL(blob);
-                    document.body.removeChild(canvas);
-                });
+                // Prepare the PNG download link only on demand, since drawing the SVG and compressing a PNG can be slow
+                if (lastPngObjectURL == "") {
+                    const image = document.createElement("img");
+                    image.onload = () => {
+                        if (lastPngObjectURL != "") {
+                            return;
+                        }
+                        const canvas = document.createElement("canvas");
+                        canvas.width = image.width;
+                        canvas.height = image.height;
+                        canvas.style.display = "none";
+                        document.body.appendChild(canvas);
+                        const context = canvas.getContext("2d");
+                        context.drawImage(image, 0, 0);
+                        canvas.toBlob(blob => {
+                            if (lastPngObjectURL != "") {
+                                return;
+                            }
+                            downloadPngLink.href = lastPngObjectURL = URL.createObjectURL(blob);
+                            document.body.removeChild(canvas);
+                        });
+                    };
+                    image.src = lastSvgObjectURL;
+                }
             }, false);
         });
     </script>
