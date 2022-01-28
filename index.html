@@ -883,6 +883,42 @@ digraph {
                         selectRange(start + 2, start + 2);
                     }
                     rerender();
+                } else if ((e.metaKey ^ e.ctrlKey) && !e.altKey && !e.shiftKey) {
+                    const start = inputSource.selectionStart;
+                    const end = inputSource.selectionEnd;
+                    const beforeText = inputSource.value;
+                    const newlineIndex = beforeText.lastIndexOf("\n", start - 1);
+                    switch (e.key) {
+                        case '[':
+                            // Ctrl+[ to unindent line
+                            if (newlineIndex + 2 <= beforeText.length && beforeText.slice(newlineIndex + 1, newlineIndex + 3) === "  ") {
+                                inputSource.value = beforeText.slice(0, newlineIndex + 1) + beforeText.slice(newlineIndex + 3);
+                                selectRange(start - 2, end - 2);
+                                rerender();
+                            }
+                            break;
+                        case ']':
+                            // Ctrl+] to indent line
+                            inputSource.value = beforeText.slice(0, newlineIndex + 1) + "  " + beforeText.slice(newlineIndex + 1);
+                            selectRange(start + 2, end + 2);
+                            rerender();
+                            break;
+                        case '/':
+                            // Ctrl+/ to comment/uncomment line
+                            if (newlineIndex + 2 <= beforeText.length && beforeText.slice(newlineIndex + 1, newlineIndex + 3) === "# ") {
+                                // uncomment
+                                inputSource.value = beforeText.slice(0, newlineIndex + 1) + beforeText.slice(newlineIndex + 3);
+                                selectRange(start - 2, end - 2);
+                            } else {
+                                // comment
+                                inputSource.value = beforeText.slice(0, newlineIndex + 1) + "# " + beforeText.slice(newlineIndex + 1);
+                                selectRange(start + 2, end + 2);
+                            }
+                            rerender();
+                        default:
+                            syncScroll();
+                            break;
+                    }
                 } else {
                     syncScroll();
                 }
