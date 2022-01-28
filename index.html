@@ -9,7 +9,7 @@
     <meta property="og:description" content="Deciduous is a security decision tree generator that serves as a threat modeling tool for engineering teams who want to create attack trees in the spirit of Security Chaos Engineering" />
     <meta property="og:title" content="Deciduous - Security Decision Tree Generator" />
     <meta property="og:image" content="./deciduous-logo-social.jpg" />
-    <meta property="og:url" content="https://swagitda.com/deciduous/" />
+    <meta property="og:url" content="https://www.deciduous.app/" />
     <meta name="twitter:card" content="summary_large_image"></meta>
     <meta name="twitter:site" content="@swagitda_" />
     <meta name="twitter:creator" content="@rpetrich" />
@@ -370,7 +370,7 @@ filter:
         </div>
         <div id="errorTarget">JavaScript is required</div>
         <div id="renderTarget"></div>
-        <p class="copyright">&copy; Copyright 2021 Ryan Petrich & Kelly Shortridge</p>
+        <p class="copyright">&copy; Copyright 2022 Ryan Petrich & Kelly Shortridge (Team Bad, LLC)</p>
     </div>
     <div id="dragger"></div>
     <script>
@@ -437,7 +437,9 @@ filter:
                 "reality-fill": "#272727",
                 "reality-text": "#FFFFFF",
                 "fact-fill": "#D2D5DD",
-                "attack-fill": "#ffa6d5",
+                "fact-shape": "diamond",
+                "attack-fill": "#ff73bd",
+                "attack-shape": "oval"
                 "mitigation-fill": "#B9D6F2",
                 "goal-fill": "#5f00c2",
                 "goal-text": "#FFFFFF",
@@ -447,7 +449,7 @@ filter:
             const parsed = jsyaml.load(yaml);
             const font = 'Arial'
             const theme = themes[Object.hasOwnProperty.call(themes, parsed.theme) ? parsed.theme : "default"];
-            const header = `// Generated from https://swagitda.com/deciduous/
+            const header = `// Generated from https://www.deciduous.app/
 digraph {
     // base graph styling
     rankdir="TB";
@@ -545,10 +547,12 @@ digraph {
                 `// facts`,
                 ...nodes("fact", facts, {
                     fillcolor: theme["fact-fill"],
+                    shape: theme["fact-shape"],
                 }),
                 `// attacks`,
                 ...nodes("attack", attacks, {
                     fillcolor: theme["attack-fill"],
+                    shape: theme["attack-shape"],
                 }),
                 `// mitigations`,
                 ...nodes("mitigation", mitigations, {
