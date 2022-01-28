@@ -835,6 +835,7 @@ digraph {
             inputSource.addEventListener("wheel", syncScroll, false);
             inputSource.addEventListener("focus", syncScroll, false);
             inputSource.addEventListener("blur", syncScroll, false);
+            let tabCompletionCandidates = [];
             inputSource.addEventListener("keydown", (e) => {
                 // Tab support
                 if (e.code === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -851,17 +852,29 @@ digraph {
                         }
                     } else {
                         if (start === end) {
+                            // Autocomplete
                             const beforeMatch = beforeText.slice(newline + 1, start).match(/\w+$/);
-                            if (beforeMatch && !/^\w/.test(beforeText.slice(start))) {
-                                for (const key in types) {
-                                    if (key.startsWith(beforeMatch[0]) && key !== beforeMatch[0]) {
-                                        // Autocomplete
-                                        const newText = key.slice(beforeMatch[0].length);
-                                        inputSource.value = beforeText.slice(0, start) + newText + beforeText.slice(end);
-                                        selectRange(start + newText.length, start + newText.length);
-                                        rerender();
-                                        return;
-                                    }
+                            if (beforeMatch) {
+                                const afterMatch = beforeText.slice(start).match(/^\w+/);
+                                const afterMatchText = afterMatch ? afterMatch[0] : "";
+                                let currentTabCompletionIndex = -1;
+                                if (tabCompletionCandidates.length > 1) {
+                                    // Existing candidates
+                                    currentTabCompletionIndex = tabCompletionCandidates.indexOf(beforeMatch[0] + afterMatchText);
+                                } else if (!afterMatch) {
+                                    // New candidates
+                                    tabCompletionCandidates = Object.keys(types).filter(key => key.startsWith(beforeMatch[0]) && key !== beforeMatch[0]);
+                                } else {
+                                    // In middle of a word, skip tab completion
+                                    tabCompletionCandidates = [];
+                                }
+                                if (tabCompletionCandidates.length) {
+                                    const replacementText = tabCompletionCandidates[(currentTabCompletionIndex + 1) % tabCompletionCandidates.length];
+                                    const replacementStart = start - beforeMatch[0].length;
+                                    inputSource.value = beforeText.slice(0, replacementStart) + replacementText + beforeText.slice(end + afterMatchText.length);
+                                    selectRange(replacementStart + replacementText.length, replacementStart + replacementText.length);
+                                    rerender();
+                                    return;
                                 }
                             }
                         }
@@ -872,6 +885,9 @@ digraph {
                     rerender();
                 } else {
                     syncScroll();
+                }
+                if (tabCompletionCandidates.length != 0) {
+                    tabCompletionCandidates = [];
                 }
             }, false);
             inputSource.addEventListener("keyup", syncScroll, false);
