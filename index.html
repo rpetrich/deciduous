@@ -434,6 +434,8 @@ filter:
                 "edge": "#2B303A",
                 "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
+                "backwards-edge-penwidth": 3,
+                "backwards-edge-arrowsize": .5,
                 "reality-fill": "#272727",
                 "reality-text": "#FFFFFF",
                 "fact-fill": "#D2D5DD",
@@ -598,6 +600,8 @@ digraph {
                         if (fromProps.backwards) {
                             props.style = "dotted";
                             props.color = theme["backwards-edge"];
+                            props.penwidth = theme["backwards-edge-penwidth"];
+                            props.arrowsize = theme["backwards-edge-arrowsize"];
                             props.weight = "0";
                         }
                         edges.push(line(`${mangleName(fromName)} -> ${mangleName(name)}`, props));
