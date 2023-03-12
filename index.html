@@ -1029,6 +1029,24 @@ digraph {
                 }
             }
             window.addEventListener("hashchange", tryHashRender, false);
+            // Themes
+            for (const key in themes) {
+                const option = document.createElement("option");
+                option.id = key;
+                option.innerText = key;
+                themePicker.appendChild(option);
+            }
+            themePicker.addEventListener("change", () => {
+                const match = lastInput.match(/^theme: \w+$/m);
+                let newValue;
+                if (match) {
+                    newValue = lastInput.slice(0, match.index) + "theme: " + themePicker.value + lastInput.slice(match.index + match[0].length);
+                } else {
+                    newValue = "theme: " + themePicker.value + "\n" + lastInput;
+                }
+                inputSource.value = newValue;
+                rerender();
+            });
             rerender();
             openGistLink.addEventListener("click", (event) => {
                 event.preventDefault();
@@ -1112,24 +1130,6 @@ digraph {
                  "active";
                 e.preventDefault();
             }, false);
-            // Themes
-            for (const key in themes) {
-                const option = document.createElement("option");
-                option.id = key;
-                option.innerText = key;
-                themePicker.appendChild(option);
-            }
-            themePicker.addEventListener("change", () => {
-                const match = lastInput.match(/^theme: \w+$/m);
-                let newValue;
-                if (match) {
-                    newValue = lastInput.slice(0, match.index) + "theme: " + themePicker.value + lastInput.slice(match.index + match[0].length);
-                } else {
-                    newValue = "theme: " + themePicker.value + "\n" + lastInput;
-                }
-                inputSource.value = newValue;
-                rerender();
-            });
         });
     </script>
 
