@@ -110,18 +110,18 @@
             margin-right: 1em;
             margin-bottom: 1em;
         }
-        .downloadWrapper {
+        .menuWrapper {
             padding: 5px;
             flex:  1;
             text-align: right;
         }
-        .downloadWrapper p {
+        .menuWrapper p {
             text-align: left;
         }
-        #dropdownWrapper {
+        .dropdownWrapper {
             display: inline-block;
         }
-        #dropdownWrapper ul {
+        .dropdownWrapper ul {
             display: none;
             position: absolute;
             z-index: 1;
@@ -132,24 +132,24 @@
             text-align: left;
             border-radius: 0 4px 4px 4px;
         }
-        #dropdownWrapper #dropdownHoverArea {
+        .dropdownWrapper .dropdownHoverArea {
             display: inline-block;
             cursor: pointer;
             padding: 2px;
             border-radius: 4px 4px 0 0;
         }
-        #dropdownWrapper #dropdownHoverArea::after {
+        .dropdownWrapper .dropdownHoverArea::after {
             content: " ▼";
             font-size: 33%;
         }
-        #dropdownWrapper ul li {
+        .dropdownWrapper ul li {
             margin: 0;
             padding-top: 5px;
         }
-        #dropdownWrapper.active ul {
+        .dropdownWrapper.active ul {
             display: block;
         }
-        #dropdownWrapper.active #dropdownHoverArea {
+        .dropdownWrapper.active .dropdownHoverArea {
             background: #D2D5DD;
         }
         #renderTarget {
@@ -224,7 +224,7 @@
             #inputHighlighted {
                 display: none;
             }
-            .downloadWrapper {
+            .menuWrapper {
                 display: none;
             }
             .copyright {
@@ -394,11 +394,10 @@ filter:
             <div class="logo">
                 <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198">
             </div>
-            <div class="downloadWrapper">
+            <div class="menuWrapper">
                 <label for="themePicker">Theme: </label><select id="themePicker"></select>
-                <a href="https://github.com/rpetrich/deciduous#deciduous">GitHub Repo</a>
-                <div id="dropdownWrapper">
-                    <a href="#" id="dropdownHoverArea">Download</a>
+                <div id="downloadWrapper" class="dropdownWrapper">
+                    <a href="#" id="downloadHoverArea" class="dropdownHoverArea">Download</a>
                     <ul>
                         <li><a id="downloadLink" download="decision-tree.dot">Graphviz DOT Format</a></li>
                         <li><a id="downloadYAMLLink" download="decision-tree.yaml">YAML Format</a></li>
@@ -406,7 +405,14 @@ filter:
                         <li><a id="downloadPngLink" href="#" download="decision-tree.png">PNG Image</a></li>
                     </ul>
                 </div>
-                <a id="openGistLink" href="#">Import GitHub Gist</a>
+                <div id="importWrapper" class="dropdownWrapper">
+                    <a href="#" id="importHoverArea" class="dropdownHoverArea">Import</a>
+                    <ul>
+                        <li><a id="openGistLink" href="#">From GitHub Gist</a></li>
+                        <li><a id="openLocalFileLink" href="#">From YAML File</a></li>
+                    </ul>
+                </div>
+                <a href="https://github.com/rpetrich/deciduous#deciduous">GitHub Repo</a>
             </div>
         </div>
         <div id="errorTarget">JavaScript is required</div>
@@ -707,6 +713,7 @@ digraph {
         const downloadPngLink = document.getElementById("downloadPngLink");
         const downloadSvgLink = document.getElementById("downloadSvgLink");
         const openGistLink = document.getElementById("openGistLink");
+        const openLocalFileLink = document.getElementById("openLocalFileLink");
         const inputHighlighted = document.getElementById("inputHighlighted");
         const highlighting = document.getElementById("highlighting");
         function syncScroll() {
@@ -1016,7 +1023,32 @@ digraph {
                     tabCompletionCandidates = [];
                 }
             }, false);
-            inputSource.addEventListener("keyup", syncScroll, false);
+            document.body.addEventListener("keyup", syncScroll, false);
+            inputSource.addEventListener("dragover", (event) => {
+                event.preventDefault();
+            }, false);
+            document.body.addEventListener("drop", (event) => {
+                event.preventDefault();
+                if (event.dataTransfer.items) {
+                    for (const item of event.dataTransfer.items) {
+                        if (item.kind === "file") {
+                            item.getAsFile().text().then((text) => {
+                                inputSource.value = text;
+                                rerender();
+                            });
+                            break;
+                        }
+                    }
+                } else {
+                    for (const file of event.dataTransfer.files) {
+                        file.text().then((text) => {
+                            inputSource.value = text;
+                            rerender();
+                        });
+                        break;
+                    }
+                }
+            }, false);
             function tryHashRender() {
                 const match = location.hash.match(/^#gist=(\w+)$/);
                 if (match) {
@@ -1083,7 +1115,26 @@ digraph {
                     }
                 }
                 tryHashRender();
-            }, false)
+            }, false);
+            openLocalFileLink.addEventListener("click", (event) => {
+                event.preventDefault();
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".yaml";
+                input.addEventListener("change", (event) => {
+                    if (event.target.files.length != 0) {
+                        const file = event.target.files[0];
+                        const reader = new FileReader();
+                        reader.readAsText(file, "UTF-8");
+                        reader.onload = (event) => {
+                            inputSource.value = event.target.result;
+                            toggleClass(document.getElementById("importWrapper"), "active");
+                            rerender();
+                        };
+                    }
+                });
+                input.click();
+            });
             // Focus the textarea so that users know it's editable
             inputSource.selectionStart = inputSource.selectionEnd = 0;
             inputSource.focus();
@@ -1144,11 +1195,29 @@ digraph {
                     image.src = lastSvgObjectURL;
                 }
             }, false);
-            // Download dropdown
-            document.getElementById("dropdownHoverArea").addEventListener("click", e => {
-                const dropdownWrapper = document.getElementById("dropdownWrapper");
-                dropdownWrapper.className = dropdownWrapper.className === "active" ? "" :
-                 "active";
+            // Dropdowns
+
+            function toggleClass(element, name) {
+                const className = element.className;
+                if (className == "") {
+                    element.className = name;
+                } else {
+                    const classes = className.split(" ");
+                    const index = classes.indexOf(name);
+                    if (index == -1) {
+                        classes.push(name);
+                    } else {
+                        classes.splice(index, 1);
+                    }
+                    element.className = classes.join(" ");
+                }
+            }
+            document.getElementById("downloadHoverArea").addEventListener("click", e => {
+                toggleClass(document.getElementById("downloadWrapper"), "active");
+                e.preventDefault();
+            }, false);
+            document.getElementById("importHoverArea").addEventListener("click", e => {
+                toggleClass(document.getElementById("importWrapper"), "active");
                 e.preventDefault();
             }, false);
         });
