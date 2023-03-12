@@ -401,6 +401,7 @@ filter:
                     <a href="#" id="dropdownHoverArea">Download</a>
                     <ul>
                         <li><a id="downloadLink" download="decision-tree.dot">Graphviz DOT Format</a></li>
+                        <li><a id="downloadYAMLLink" download="decision-tree.yaml">YAML Format</a></li>
                         <li><a id="downloadSvgLink" download="decision-tree.svg">SVG Image</a></li>
                         <li><a id="downloadPngLink" href="#" download="decision-tree.png">PNG Image</a></li>
                     </ul>
@@ -702,6 +703,7 @@ digraph {
         const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
         const downloadLink = document.getElementById("downloadLink");
+        const downloadYAMLLink = document.getElementById("downloadYAMLLink");
         const downloadPngLink = document.getElementById("downloadPngLink");
         const downloadSvgLink = document.getElementById("downloadSvgLink");
         const openGistLink = document.getElementById("openGistLink");
@@ -714,6 +716,7 @@ digraph {
         window["@hpcc-js/wasm"].graphvizSync().then(graphviz => {
             let lastInput = "";
             let lastObjectURL = "";
+            let lastYAMLObjectURL = "";
             let lastSvgObjectURL = "";
             let lastPngObjectURL = "";
             let types = {};
@@ -820,12 +823,15 @@ digraph {
                             const scale = 0.75;
                             svgElement.setAttribute("width", parseInt(svgElement.getAttribute("width"), 10) * scale + "pt");
                             svgElement.setAttribute("height", parseInt(svgElement.getAttribute("height"), 10) * scale + "pt");
-                        }
+                        };
+
                         // Create a download link
                         if (window.File && URL.createObjectURL) {
                             const file = new File([dot], "graph.dot", {
                                 "type": "text/vnd.graphviz",
-                            });
+                            }
+                            );
+
                             downloadLink.download = title + ".dot";
                             const newObjectURL = URL.createObjectURL(file);
                             downloadLink.href = newObjectURL;
@@ -833,9 +839,11 @@ digraph {
                                 URL.revokeObjectURL(lastObjectURL);
                             }
                             lastObjectURL = newObjectURL;
+
                             const svgFile = new File([svg], "graph.svg", {
                                 "type": "image/svg+xml",
                             });
+
                             downloadSvgLink.download = title + ".svg";
                             const newSvgObjectURL = URL.createObjectURL(svgFile);
                             downloadSvgLink.href = newSvgObjectURL;
@@ -843,11 +851,24 @@ digraph {
                                 URL.revokeObjectURL(lastSvgObjectURL);
                             }
                             lastSvgObjectURL = newSvgObjectURL;
+
                             downloadPngLink.download = title + ".png";
                             if (lastPngObjectURL != "") {
                                 URL.revokeObjectURL(lastPngObjectURL);
                                 lastPngObjectURL = "";
                             }
+
+                            const yamlFile = new File([newInput], "graph.yaml", {
+                                "type": "text/yaml",
+                            });
+
+                            downloadYAMLLink.download = title + ".yaml";
+                            const newYAMLObjectURL = URL.createObjectURL(yamlFile)
+                            downloadYAMLLink.href = newYAMLObjectURL;
+                            if (lastObjectURL != "") {
+                                URL.revokeObjectURL(lastYAMLObjectURL);
+                            }
+                            lastYAMLObjectURL = newYAMLObjectURL;
                         }
                         // Add quick linky links
                         for (const title of renderTarget.querySelectorAll("title")) {
