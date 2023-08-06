@@ -34,6 +34,10 @@
         a:visited {
             color: #FF499B;
         }
+        body.dark {
+            color: white;
+            background: black;
+        }
         #leftPane {
             position: absolute;
             width: 40%;
@@ -235,7 +239,7 @@
     </style>
 </head>
 
-<body>
+<body class="dark">
     <div id="leftPane">
         <h2 class="sectionHeader">Text Editor</h2>
         <textarea id="inputSource" spellcheck="false">
@@ -413,6 +417,7 @@ filter:
                     </ul>
                 </div>
                 <a href="https://github.com/rpetrich/deciduous#deciduous">GitHub Repo</a>
+                <a href="#" id="darkToggle">Toggle Dark</a>
             </div>
         </div>
         <div id="errorTarget">JavaScript is required</div>
@@ -421,6 +426,7 @@ filter:
     </div>
     <div id="dragger"></div>
     <script>
+        let dark = true;
         function wordwrap(text, limit) {
             text = String(text);
             if (text.indexOf("\n") != -1) {
@@ -464,7 +470,7 @@ filter:
             }
             return [String(raw), null, {}];
         }
-        const themes = {
+        const lightThemes = {
             "classic": {
                 "edge": "#2B303A",
                 "edge-text": "#DB2955",
@@ -477,7 +483,7 @@ filter:
                 "goal-fill": "#DB2955",
                 "goal-text": "#FFFFFF",
             },
-             "default": {
+            "default": {
                 "edge": "#2B303A",
                 "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
@@ -505,10 +511,57 @@ filter:
                 "goal-fill": "#5f00c2",
                 "goal-text": "#FFFFFF",
             },
-        }
+        };
+        const darkThemes = {
+            "classic": {
+                "edge": "#2B303A",
+                "edge-text": "#DB2955",
+                "backwards-edge": "#7692FF",
+                "reality-fill": "#2B303A",
+                "reality-text": "#FFFFFF",
+                "fact-fill": "#C6CCD2",
+                "attack-fill": "#ED96AC",
+                "mitigation-fill": "#ABD2FA",
+                "goal-fill": "#DB2955",
+                "goal-text": "#FFFFFF",
+            },
+            "default": {
+                "edge": "#c4c9d4",
+                "edge-text": "white",
+                "backwards-edge": "#002ee6",
+                "backwards-edge-penwidth": 3,
+                "backwards-edge-arrowsize": .5,
+                "reality-fill": "#d9d9d9",
+                "reality-text": "black",
+                "fact-fill": "#21242c",
+                "fact-text": "white",
+                "attack-fill": "#6b0039",
+                "attack-text": "white",
+                "mitigation-fill": "#0d2a45",
+                "mitigation-text": "white",
+                "goal-fill": "#9b3dff",
+                "goal-text": "white",
+                "title": "white",
+            },
+            "accessible": {
+                "edge": "#2B303A",
+                "edge-text": "#010065",
+                "backwards-edge": "#7692FF",
+                "backwards-edge-penwidth": 3,
+                "backwards-edge-arrowsize": .5,
+                "reality-fill": "#272727",
+                "reality-text": "#FFFFFF",
+                "fact-fill": "#D2D5DD",
+                "attack-fill": "#FF7EC3",
+                "mitigation-fill": "#CCCCFF",
+                "goal-fill": "#5f00c2",
+                "goal-text": "#FFFFFF",
+            },
+        };
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
             const font = 'Arial'
+            const themes = dark ? darkThemes : lightThemes;
             const themeName = Object.hasOwnProperty.call(themes, parsed.theme) ? parsed.theme : "default";
             const theme = themes[themeName];
             const header = `// Generated from https://www.deciduous.app/
@@ -521,6 +574,8 @@ digraph {
     ranksep="0.4";
     label=${JSON.stringify(typeof parsed.title === "string" ? parsed.title : "")};
     labelloc="t";
+    bgcolor=${JSON.stringify(dark ? "black" : "white")}
+    fontcolor=${JSON.stringify(theme["title"] || "black")}
     fontname=${JSON.stringify(font)};
     node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
     edge [ fontname=${JSON.stringify(font)} fontsize=12 color="${theme["edge"]}" ]
@@ -609,14 +664,17 @@ digraph {
                 `// facts`,
                 ...nodes("fact", facts, {
                     fillcolor: theme["fact-fill"],
+                    fontcolor: theme["fact-text"] || "black",
                 }),
                 `// attacks`,
                 ...nodes("attack", attacks, {
                     fillcolor: theme["attack-fill"],
+                    fontcolor: theme["attack-text"] || "black",
                 }),
                 `// mitigations`,
                 ...nodes("mitigation", mitigations, {
                     fillcolor: theme["mitigation-fill"],
+                    fontcolor: theme["mitigation-text"] || "black",
                 }),
                 `// goals`,
                 ...nodes("goal", goals, {
@@ -737,11 +795,13 @@ digraph {
                 setTimeout(syncScroll, 0);
             }
             const themePicker = document.getElementById("themePicker");
+            let oldDark = false;
             function rerender() {
                 syncScroll();
                 const newInput = inputSource.value;
-                if (newInput != lastInput) {
+                if (newInput != lastInput || oldDark != dark) {
                     lastInput = newInput;
+                    oldDark = dark;
                     if (window.localStorage) {
                         localStorage.setItem("deciduous-content", newInput);
                     }
@@ -823,6 +883,7 @@ digraph {
                         // console.log(dot);
                         // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
+                        document.body.className = dark ? "dark" : "light";
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
                         const svgElement = renderTarget.querySelector("svg");
@@ -1083,7 +1144,7 @@ digraph {
             }
             window.addEventListener("hashchange", tryHashRender, false);
             // Themes
-            for (const key in themes) {
+            for (const key in lightThemes) {
                 const option = document.createElement("option");
                 option.id = key;
                 option.innerText = key;
@@ -1195,6 +1256,11 @@ digraph {
                     image.src = lastSvgObjectURL;
                 }
             }, false);
+            document.getElementById("darkToggle").addEventListener("click", (e) => {
+                e.preventDefault();
+                dark = !dark;
+                rerender();
+            });
             // Dropdowns
 
             function toggleClass(element, name) {
