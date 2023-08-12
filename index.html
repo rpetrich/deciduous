@@ -58,6 +58,10 @@
             padding-top: 9px;
             box-sizing: border-box;
         }
+        body.dark .sectionHeader {
+            color: #9da5f1;
+            border-bottom: 1px solid #333;
+        }
         #inputSource, #highlighting {
             position: absolute;
             width: 100%;
@@ -84,6 +88,10 @@
             color: transparent;
             background: transparent;
             caret-color: black;
+        }
+        body.dark #inputSource {
+            border-right: 1px solid #333;
+            caret-color: white;
         }
         #highlighting {
             z-index: 0;
