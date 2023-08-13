@@ -9,16 +9,16 @@ Theme options include:
 - `theme: classic` - classic Graphviz styling
 
 
-### Examples
-Find example trees for #inspo in /examples.
+## Examples
+Find example trees for #inspo in [/examples](https://github.com/rpetrich/deciduous/tree/examples/examples).
 
 #### Security
-* S3 Bucket with Video Recordings
-* Cryptominer in a Container
+* [S3 Bucket with Video Recordings](https://github.com/rpetrich/deciduous/blob/examples/examples/s3-bucket-video-recordings.yaml)
+* [Cryptominer in a Container](https://github.com/rpetrich/deciduous/blob/examples/examples/cryptominer-in-container.yaml) ([video explanation](https://youtu.be/oJ3iSyhWb5U?t=460))
 
 #### Reliability
-* Missing Logs
-* Unrealistic Traces
+* [Missing Logs](https://github.com/rpetrich/deciduous/blob/examples/examples/missing-logs.yaml) ([video explanation](https://www.youtube.com/watch?v=DGdtfB1eY98))
+* [Unrealistic Traces](https://github.com/rpetrich/deciduous/blob/examples/examples/unrealistic-traces.yaml)
 
 #### Surrealism
-* Thanksploitation Rick and Morty episode: https://kellyshortridge.com/blog/posts/rick-morty-thanksploitation-decision-tree/
+* [Thanksploitation](https://github.com/rpetrich/deciduous/blob/examples/examples/thanksploitation.yml) scenario from Rick and Morty ([blog post](https://kellyshortridge.com/blog/posts/rick-morty-thanksploitation-decision-tree/)
