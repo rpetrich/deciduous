@@ -1,0 +1,50 @@
+title: Adverse Scenario - Unrealistic Distributed Traces
+
+facts:
+- no_trace_ids: no trace IDs
+  from:
+  - reality: '#yolo'
+
+attacks:
+- incon_trace_ids: inconsistent trace IDs
+  from:
+  - trace_ids
+- encoding_issues: encoding issues in the trace ID
+  from:
+  - read_headers
+- illogical_spans: illogical spans
+  from:
+  - trace_ids
+- timestamp_mismatch: timestamp mismatches
+  from:
+  - illogical_spans
+- general_trace: trace isn't granular enough
+  from:
+  - sync_time
+
+mitigations:
+- trace_ids: add trace IDs
+  from:
+  - reality
+  - no_trace_ids
+- read_headers: properly read tracing headers
+  from:
+  - incon_trace_ids
+- decode_headers: decode tracing headers properly
+  from:
+  - encoding_issues
+- sync_time: synchronize time on hosts
+  from: 
+  - timestamp_mismatch
+- annotate_spans: annotate additional spans
+  from:
+  - general_trace
+
+goals:
+- unrealistic_traces: Unrealistic distributed traces (traces don't reflect reality)
+  from:
+  - no_trace_ids
+  - incon_trace_ids
+  - encoding_issues
+  - timestamp_mismatch
+  - general_trace

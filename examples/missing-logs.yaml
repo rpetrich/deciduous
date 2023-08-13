@@ -1,0 +1,98 @@
+title: Adverse Scenario - Missing Logs
+
+facts:
+- same_hostname: giving all your hosts the same hostname
+  from:
+  - reality: '#yolo'
+- misconfigured: misconfigured log daemon
+  from:
+  - reality: '#yolo'
+- block_egress: blocking network egress; logs can't be shipped
+  from:
+  - reality: '#yolo'
+- forgetting_daemon: forgetting to install the log daemon
+  from:
+  - reality: '#yolo'
+
+attacks:
+- expired_certs: expired TLS certificates
+  from:
+  - misconfigured
+- wrong_path: configuring the wrong path to gather logs
+  from:
+  - misconfigured
+- no_start: forgetting to start the log daemon
+  from:
+  - reality: '#yolo'
+  - base_daemon
+- fill_disk: filling the disk so no logs produced
+  from:
+  - start_daemon
+- log_jam: produce logs faster than you can ship them
+  from:
+  - start_daemon
+- wrong_time: wrong log times
+  from:
+  - start_daemon
+- host_clock: incorrect host clock
+  from:
+  - wrong_time
+- wrong_parsing: incorrect parsing of log timestamps
+  from:
+  - wrong_time
+
+mitigations:
+- standardize_path: standardize log paths; all prod services write to same path
+  from:
+  - wrong_path
+- base_daemon: include daemon in base image
+  from:
+  - forgetting_daemon
+- smoke_test: smoke tests to verify working logs
+  from:
+  - no_start
+  - wrong_path
+  - block_egress
+- monitor_daemon: monitor the log daemon
+  from:
+  - no_start
+- unique_names: generate unique hostnames for hosts
+  from: 
+  - same_hostname
+- monitor_disk: monitor and alert on disk usage
+  from:
+  - fill_disk
+- monitor_cert: monitor the root certificate store
+  from:
+  - expired_certs
+- start_daemon: start the log daemon
+  from:
+  - no_start
+- log_less: reconfigure app workload to log less
+  from:
+  - log_jam
+- integration_test: integration test that checks for log level
+  from:
+  - log_jam
+- run_ntp: run an NTP daemon
+  from:
+  - host_clock
+- standard_lib: use standard logging library
+  from:
+  - wrong_parsing
+
+
+
+goals:
+- missing_logs: Missing logs (good luck with incident response)
+  from:
+  - forgetting_daemon
+  - no_start
+  - same_hostname
+  - misconfigured
+  - wrong_path
+  - fill_disk
+  - block_egress
+  - expired_certs
+  - log_jam
+  - wrong_time
