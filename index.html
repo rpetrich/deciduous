@@ -34,6 +34,10 @@
         a:visited {
             color: #FF499B;
         }
+        .dark body {
+            color: white;
+            background: black;
+        }
         #leftPane {
             position: absolute;
             width: 40%;
@@ -53,6 +57,10 @@
             padding-left: 20px;
             padding-top: 9px;
             box-sizing: border-box;
+        }
+        .dark .sectionHeader {
+            color: #9da5f1;
+            border-bottom: 1px solid #333;
         }
         #inputSource, #highlighting {
             position: absolute;
@@ -80,6 +88,10 @@
             color: transparent;
             background: transparent;
             caret-color: black;
+        }
+        .dark #inputSource {
+            border-right: 1px solid #333;
+            caret-color: white;
         }
         #highlighting {
             z-index: 0;
@@ -109,6 +121,9 @@
         .logo {
             margin-right: 1em;
             margin-bottom: 1em;
+        }
+        .dark .logo .logo-image {
+            content: url("deciduous-logo-dark.png");
         }
         .menuWrapper {
             padding: 5px;
@@ -171,20 +186,35 @@
         #highlighting {
             color: grey;
         }
+        .dark #highlighting {
+            color: #B8B7B7;
+        }
         #highlighting .punctuation {
             color: grey;
         }
         #highlighting .attacks, #highlighting .attack {
             color: #ff1c82;
         }
+        .dark #highlighting .attacks, .dark #highlighting .attack {
+            color: #FBCAEF;
+        }
         #highlighting .mitigations, #highlighting .mitigation {
             color: #2b56b5;
+        }
+        .dark #highlighting .mitigations, .dark #highlighting .mitigation {
+            color: #5BCEFA;
         }
         #highlighting .facts, #highlighting .fact {
             color: #1b0533;
         }
+        .dark #highlighting .facts, .dark #highlighting .fact {
+            color: #eee;
+        }
         #highlighting .goals, #highlighting .goal {
             color: #5f00c2;
+        }
+        .dark #highlighting .goals, .dark #highlighting .goal {
+            color: #F056C5;
         }
         #highlighting .comment {
         }
@@ -233,6 +263,15 @@
 
         }
     </style>
+    <script>
+        // load previous dark mode setting as soon as possible
+        let dark = false;
+        if (window.localStorage) {
+            if (dark = window.localStorage.getItem("deciduous-dark") === "true") {
+                document.documentElement.className = "dark";
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -392,7 +431,7 @@ filter:
     <div class="contentArea" id="rightPane">
         <div class="right-header">
             <div class="logo">
-                <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198">
+                <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198" class="logo-image">
             </div>
             <div class="menuWrapper">
                 <label for="themePicker">Theme: </label><select id="themePicker"></select>
@@ -466,6 +505,7 @@ filter:
         }
         const themes = {
             "classic": {
+                "dark": false,
                 "edge": "#2B303A",
                 "edge-text": "#DB2955",
                 "backwards-edge": "#7692FF",
@@ -477,7 +517,27 @@ filter:
                 "goal-fill": "#DB2955",
                 "goal-text": "#FFFFFF",
             },
-             "default": {
+            "dark": {
+                "dark": true,
+                "edge": "#c4c9d4",
+                "edge-text": "#c4c9d4",
+                "backwards-edge": "#FFFD98",
+                "backwards-edge-penwidth": 3,
+                "backwards-edge-arrowsize": .5,
+                "reality-fill": "#d9d9d9",
+                "reality-text": "black",
+                "fact-fill": "#707070",
+                "fact-text": "white",
+                "attack-fill": "#FBCAEF",
+                "attack-text": "black",
+                "mitigation-fill": "#5BCEFA",
+                "mitigation-text": "black",
+                "goal-fill": "#ED33B9",
+                "goal-text": "white",
+                "title": "white",
+            },
+            "default": {
+                "dark": false,
                 "edge": "#2B303A",
                 "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
@@ -492,6 +552,7 @@ filter:
                 "goal-text": "#FFFFFF",
             },
             "accessible": {
+                "dark": false,
                 "edge": "#2B303A",
                 "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
@@ -505,12 +566,13 @@ filter:
                 "goal-fill": "#5f00c2",
                 "goal-text": "#FFFFFF",
             },
-        }
+        };
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
             const font = 'Arial'
             const themeName = Object.hasOwnProperty.call(themes, parsed.theme) ? parsed.theme : "default";
             const theme = themes[themeName];
+            dark = theme.dark;
             const header = `// Generated from https://www.deciduous.app/
 digraph {
     // base graph styling
@@ -521,6 +583,8 @@ digraph {
     ranksep="0.4";
     label=${JSON.stringify(typeof parsed.title === "string" ? parsed.title : "")};
     labelloc="t";
+    bgcolor=${JSON.stringify(dark ? "black" : "white")}
+    fontcolor=${JSON.stringify(theme["title"] || "black")}
     fontname=${JSON.stringify(font)};
     node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
     edge [ fontname=${JSON.stringify(font)} fontsize=12 color="${theme["edge"]}" ]
@@ -609,14 +673,17 @@ digraph {
                 `// facts`,
                 ...nodes("fact", facts, {
                     fillcolor: theme["fact-fill"],
+                    fontcolor: theme["fact-text"] || "black",
                 }),
                 `// attacks`,
                 ...nodes("attack", attacks, {
                     fillcolor: theme["attack-fill"],
+                    fontcolor: theme["attack-text"] || "black",
                 }),
                 `// mitigations`,
                 ...nodes("mitigation", mitigations, {
                     fillcolor: theme["mitigation-fill"],
+                    fontcolor: theme["mitigation-text"] || "black",
                 }),
                 `// goals`,
                 ...nodes("goal", goals, {
@@ -737,11 +804,13 @@ digraph {
                 setTimeout(syncScroll, 0);
             }
             const themePicker = document.getElementById("themePicker");
+            let oldDark = false;
             function rerender() {
                 syncScroll();
                 const newInput = inputSource.value;
-                if (newInput != lastInput) {
+                if (newInput != lastInput || oldDark != dark) {
                     lastInput = newInput;
+                    oldDark = dark;
                     if (window.localStorage) {
                         localStorage.setItem("deciduous-content", newInput);
                     }
@@ -823,6 +892,10 @@ digraph {
                         // console.log(dot);
                         // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
+                        document.documentElement.className = dark ? "dark" : "light";
+                        if (window.localStorage) {
+                            window.localStorage.setItem("deciduous-dark", dark);
+                        }
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
                         const svgElement = renderTarget.querySelector("svg");
