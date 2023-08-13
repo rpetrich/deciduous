@@ -935,6 +935,30 @@ digraph {
             let tabCompletionCandidates = [];
             inputSource.addEventListener("keydown", (e) => {
                 // Tab support
+                const start = inputSource.selectionStart;
+                const end = inputSource.selectionEnd;
+                const beforeText = inputSource.value;
+                const newlineIndex = beforeText.lastIndexOf("\n", start - 1);
+                let nextNewlineIndex = beforeText.indexOf("\n", end - 1);
+                if (nextNewlineIndex === -1) {
+                    nextNewlineIndex = beforeText.length;
+                }
+                const expandedSelection = beforeText.slice(newlineIndex + 1, nextNewlineIndex);
+                function applyExpandedSelection(replacement) {
+                    selectRange(newlineIndex + 1, nextNewlineIndex);
+                    document.execCommand(replacement ? "insertText" : "delete", false, replacement);
+                    const expectedValue = beforeText.slice(0, newlineIndex + 1) + replacement + beforeText.slice(nextNewlineIndex);
+                    if (inputSource.value != expectedValue) {
+                        inputSource.value = expectedValue;
+                    }
+                    if (start !== end) {
+                        selectRange(newlineIndex + 1, end - expandedSelection.length + replacement.length);
+                    } else {
+                        selectRange(start - expandedSelection.length + replacement.length, end - expandedSelection.length + replacement.length);
+                    }
+                    rerender();
+                    syncScroll();
+                }
                 if (e.code === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey) {
                     e.preventDefault();
                     const start = inputSource.selectionStart;
@@ -944,8 +968,7 @@ digraph {
                     if (e.shiftKey) {
                         // Unindent line two spaces
                         if (newline + 2 <= beforeText.length && beforeText.slice(newline + 1, newline + 3) === "  ") {
-                            inputSource.value = beforeText.slice(0, newline + 1) + beforeText.slice(newline + 3);
-                            selectRange(start - 2, start - 2);
+                            applyExpandedSelection(expandedSelection.replace(/^  /gm, ""));
                         }
                     } else {
                         if (start === end) {
@@ -968,43 +991,33 @@ digraph {
                                 if (tabCompletionCandidates.length) {
                                     const replacementText = tabCompletionCandidates[(currentTabCompletionIndex + 1) % tabCompletionCandidates.length];
                                     const replacementStart = start - beforeMatch[0].length;
-                                    inputSource.value = beforeText.slice(0, replacementStart) + replacementText + beforeText.slice(end + afterMatchText.length);
+                                    selectRange(replacementStart, end + afterMatchText.length);
+                                    document.execCommand("insertText", false, replacementText);
+                                    const expectedValue = beforeText.slice(0, replacementStart) + replacementText + beforeText.slice(end + afterMatchText.length);
+                                    if (inputSource.value != expectedValue) {
+                                        inputSource.value = expectedValue;
+                                    }
                                     selectRange(replacementStart + replacementText.length, replacementStart + replacementText.length);
                                     rerender();
                                     return;
                                 }
                             }
                         }
-                        // Insert two spaces
-                        inputSource.value = beforeText.slice(0, start) + "  " + beforeText.slice(end);
-                        selectRange(start + 2, start + 2);
+                        if (start === end) {
+                            // Insert two spaces
+                            document.execCommand("insertText", false, "  ");
+                            selectRange(start + 2, start + 2);
+                        } else {
+                            // Indent lines
+                            applyExpandedSelection(expandedSelection.replace(/^/gm, "  "));
+                        }
                     }
                     rerender();
                 } else if ((e.metaKey ^ e.ctrlKey) && !e.altKey && !e.shiftKey) {
-                    const start = inputSource.selectionStart;
-                    const end = inputSource.selectionEnd;
-                    const beforeText = inputSource.value;
-                    const newlineIndex = beforeText.lastIndexOf("\n", start - 1);
-                    let nextNewlineIndex = beforeText.indexOf("\n", end - 1);
-                    if (nextNewlineIndex === -1) {
-                        return beforeText.length;
-                    }
-                    const expandedSelection = beforeText.slice(newlineIndex + 1, nextNewlineIndex);
-                    function applyExpandedSelection(replacement) {
-                        inputSource.value = beforeText.slice(0, newlineIndex + 1) + replacement + beforeText.slice(nextNewlineIndex);
-                        if (start !== end) {
-                            selectRange(newlineIndex + 1, end - expandedSelection.length + replacement.length);
-                        } else {
-                            selectRange(start - expandedSelection.length + replacement.length, end - expandedSelection.length + replacement.length);
-                        }
-                        rerender();
-                        syncScroll();
-                    }
                     switch (e.key) {
                         case '[':
                             // Ctrl+[ to unindent line
                             if (newlineIndex + 2 <= beforeText.length && beforeText.slice(newlineIndex + 1, newlineIndex + 3) === "  ") {
-                                inputSource.value = beforeText.slice(0, newlineIndex + 1) + beforeText.slice(newlineIndex + 3);
                                 applyExpandedSelection(expandedSelection.replace(/^  /gm, ""));
                             }
                             break;
