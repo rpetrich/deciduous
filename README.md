@@ -23,7 +23,7 @@ Example trees for #inspo are hosted in [/examples](./examples).
 * [Cryptominer in a Container](./examples/cryptominer-in-container.yaml) ([video explanation](https://youtu.be/oJ3iSyhWb5U?t=460))
 
 #### Reliability
-* [Missing Logs](./examples/examples/missing-logs.yaml) ([video explanation](https://www.youtube.com/watch?v=DGdtfB1eY98))
+* [Missing Logs](./examples/missing-logs.yaml) ([video explanation](https://www.youtube.com/watch?v=DGdtfB1eY98))
 * [Unrealistic Traces](./examples/unrealistic-traces.yaml)
 
 #### Surrealism
