@@ -77,7 +77,8 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             background: transparent;
-            font-size: 80%;
+            font-size: 100%;
+            font-family: arial;
             color: inherit;
         }
         #inputSource, #highlighting {
@@ -168,6 +169,9 @@
             text-align: left;
             border-radius: 0 4px 4px 4px;
         }
+        select {
+            font-family: inherit;
+        }
         .dark .dropdownWrapper ul {
             background: #323743;
         }
@@ -179,7 +183,7 @@
         }
         .dropdownWrapper .dropdownHoverArea::after {
             content: " ▼";
-            font-size: 33%;
+            font-size: 50%;
         }
         .dropdownWrapper ul li {
             margin: 0;
@@ -194,7 +198,7 @@
         .dark .dropdownWrapper.active .dropdownHoverArea {
             background: #323743;
         }
-        .editing #editButton {
+        .editing #editButton, .editing .edit-button {
             display: none;
         }
         #renderTarget {
@@ -257,6 +261,23 @@
             height: 100%;
             width: 3px;
         }
+        button {
+            font-family: inherit;
+        }
+        .edit-button {
+            background-color: #9da5f1;
+            color: white;
+            border-radius: 10px;
+            border: none;
+            padding: 2px 10px 2px 10px;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        .edit-button a, .edit-button a.visited {
+            color: white;
+            text-decoration: none;
+        }
+
         @media print {
             .logo {
                 position: absolute;
@@ -293,7 +314,7 @@
             .copyright {
                 position: fixed;
                 bottom: 0;
-
+            }
         }
     </style>
     <script>
@@ -475,7 +496,7 @@ filter:
                 <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198" class="logo-image">
             </div>
             <div class="menuWrapper">
-                <a href="#" id="editButton">Edit</a>
+                <button class="edit-button"><a href="#" id="editButton">Edit</a></button>
                 <label for="themePicker">Theme: </label><select id="themePicker"></select>
                 <div id="downloadWrapper" class="dropdownWrapper">
                     <a href="#" id="downloadHoverArea" class="dropdownHoverArea">Download</a>
