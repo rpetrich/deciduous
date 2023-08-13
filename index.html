@@ -448,7 +448,7 @@ filter:
                     <a href="#" id="importHoverArea" class="dropdownHoverArea">Import</a>
                     <ul>
                         <li><a id="openGistLink" href="#">From GitHub Gist</a></li>
-                        <li><a id="openLocalFileLink" href="#">From YAML File</a></li>
+                        <li><a id="openLocalFileLink" href="#">From Local File</a></li>
                     </ul>
                 </div>
                 <a href="https://github.com/rpetrich/deciduous#deciduous">GitHub Repo</a>
@@ -907,7 +907,8 @@ digraph {
 
                         // Create a download link
                         if (window.File && URL.createObjectURL) {
-                            const file = new File([dot], "graph.dot", {
+                            const encodedInput = btoa(newInput);
+                            const file = new File([dot + "// deciduous:" + encodedInput], "graph.dot", {
                                 "type": "text/vnd.graphviz",
                             }
                             );
@@ -920,7 +921,7 @@ digraph {
                             }
                             lastObjectURL = newObjectURL;
 
-                            const svgFile = new File([svg], "graph.svg", {
+                            const svgFile = new File([svg + "<!-- deciduous:" + encodedInput + " -->"], "graph.svg", {
                                 "type": "image/svg+xml",
                             });
 
@@ -1100,24 +1101,30 @@ digraph {
             inputSource.addEventListener("dragover", (event) => {
                 event.preventDefault();
             }, false);
+            function parseHiddenComment(text) {
+                // extract hidden embedded comment
+                const match = text.match(/\n(\/\/|<!--) deciduous:([a-zA-Z0-9]+=*)( -->)?$/);
+                if (match) {
+                    return atob(match[2]);
+                }
+            }
+            function importText(text) {
+                const hiddenComment = parseHiddenComment(text);
+                inputSource.value = hiddenComment !== undefined ? hiddenComment : text;
+                rerender();
+            }
             document.body.addEventListener("drop", (event) => {
                 event.preventDefault();
                 if (event.dataTransfer.items) {
                     for (const item of event.dataTransfer.items) {
                         if (item.kind === "file") {
-                            item.getAsFile().text().then((text) => {
-                                inputSource.value = text;
-                                rerender();
-                            });
+                            item.getAsFile().text().then(importText);
                             break;
                         }
                     }
                 } else {
                     for (const file of event.dataTransfer.files) {
-                        file.text().then((text) => {
-                            inputSource.value = text;
-                            rerender();
-                        });
+                        file.text().then(importText);
                         break;
                     }
                 }
@@ -1139,11 +1146,18 @@ digraph {
                                 }
                             }
                         }
+                        for (const key in files) {
+                            if (/\.(yaml|svg)$/.test(key)) {
+                                const file = files[key];
+                                if (file.truncated) {
+                                    return fetch(file.raw_url).then(fileResponse => fileResponse.text());
+                                } else {
+                                    return files[key].content;
+                                }
+                            }
+                        }
                         return `# No yaml in gist ID ${match[1]}`;
-                    }).catch(e => `# Error loading ${url}: ${e}`).then(text => {
-                        inputSource.value = text;
-                        rerender();
-                    });
+                    }).catch(e => `# Error loading ${url}: ${e}`).then(importText);
                 }
             }
             if (!tryHashRender()) {
@@ -1193,16 +1207,23 @@ digraph {
                 event.preventDefault();
                 const input = document.createElement("input");
                 input.type = "file";
-                input.accept = ".yaml";
+                input.accept = ".yaml,.svg,.dot,.png";
                 input.addEventListener("change", (event) => {
                     if (event.target.files.length != 0) {
                         const file = event.target.files[0];
                         const reader = new FileReader();
                         reader.readAsText(file, "UTF-8");
                         reader.onload = (event) => {
-                            inputSource.value = event.target.result;
                             toggleClass(document.getElementById("importWrapper"), "active");
-                            rerender();
+                            const { result } = event.target;
+                            if (!/\.yaml$/.test(file.name)) {
+                                const hiddenComment = parseHiddenComment(result);
+                                if (hiddenComment === undefined) {
+                                    alert(file.name + " is not a valid Deciduous output file");
+                                    return;
+                                }
+                            }
+                            importText(result);
                         };
                     }
                 });
@@ -1258,6 +1279,7 @@ digraph {
                         const context = canvas.getContext("2d");
                         context.drawImage(image, 0, 0);
                         canvas.toBlob(blob => {
+                            blob = new Blob([blob, "\n// deciduous:" + btoa(inputSource.value)], { type: "image/png" });
                             if (lastPngObjectURL != "") {
                                 return;
                             }
