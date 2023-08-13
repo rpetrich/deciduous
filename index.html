@@ -34,7 +34,7 @@
         a:visited {
             color: #FF499B;
         }
-        body.dark {
+        .dark body {
             color: white;
             background: black;
         }
@@ -58,7 +58,7 @@
             padding-top: 9px;
             box-sizing: border-box;
         }
-        body.dark .sectionHeader {
+        .dark .sectionHeader {
             color: #9da5f1;
             border-bottom: 1px solid #333;
         }
@@ -89,7 +89,7 @@
             background: transparent;
             caret-color: black;
         }
-        body.dark #inputSource {
+        .dark #inputSource {
             border-right: 1px solid #333;
             caret-color: white;
         }
@@ -260,9 +260,18 @@
 
         }
     </style>
+    <script>
+        // load previous dark mode setting as soon as possible
+        let dark = false;
+        if (window.localStorage) {
+            if (dark = window.localStorage.getItem("deciduous-dark") === "true") {
+                document.documentElement.className = "dark";
+            }
+        }
+    </script>
 </head>
 
-<body class="dark">
+<body>
     <div id="leftPane">
         <h2 class="sectionHeader">Text Editor</h2>
         <textarea id="inputSource" spellcheck="false">
@@ -440,7 +449,6 @@ filter:
                     </ul>
                 </div>
                 <a href="https://github.com/rpetrich/deciduous#deciduous">GitHub Repo</a>
-                <a href="#" id="darkToggle">Toggle Dark</a>
             </div>
         </div>
         <div id="errorTarget">JavaScript is required</div>
@@ -449,7 +457,6 @@ filter:
     </div>
     <div id="dragger"></div>
     <script>
-        let dark = true;
         function wordwrap(text, limit) {
             text = String(text);
             if (text.indexOf("\n") != -1) {
@@ -493,8 +500,9 @@ filter:
             }
             return [String(raw), null, {}];
         }
-        const lightThemes = {
+        const themes = {
             "classic": {
+                "dark": false,
                 "edge": "#2B303A",
                 "edge-text": "#DB2955",
                 "backwards-edge": "#7692FF",
@@ -506,49 +514,8 @@ filter:
                 "goal-fill": "#DB2955",
                 "goal-text": "#FFFFFF",
             },
-            "default": {
-                "edge": "#2B303A",
-                "edge-text": "#010065",
-                "backwards-edge": "#7692FF",
-                "backwards-edge-penwidth": 3,
-                "backwards-edge-arrowsize": .5,
-                "reality-fill": "#272727",
-                "reality-text": "#FFFFFF",
-                "fact-fill": "#D2D5DD",
-                "attack-fill": "#ff92cc",
-                "mitigation-fill": "#B9D6F2",
-                "goal-fill": "#5f00c2",
-                "goal-text": "#FFFFFF",
-            },
-            "accessible": {
-                "edge": "#2B303A",
-                "edge-text": "#010065",
-                "backwards-edge": "#7692FF",
-                "backwards-edge-penwidth": 3,
-                "backwards-edge-arrowsize": .5,
-                "reality-fill": "#272727",
-                "reality-text": "#FFFFFF",
-                "fact-fill": "#D2D5DD",
-                "attack-fill": "#FF7EC3",
-                "mitigation-fill": "#CCCCFF",
-                "goal-fill": "#5f00c2",
-                "goal-text": "#FFFFFF",
-            },
-        };
-        const darkThemes = {
-            "classic": {
-                "edge": "#2B303A",
-                "edge-text": "#DB2955",
-                "backwards-edge": "#7692FF",
-                "reality-fill": "#2B303A",
-                "reality-text": "#FFFFFF",
-                "fact-fill": "#C6CCD2",
-                "attack-fill": "#ED96AC",
-                "mitigation-fill": "#ABD2FA",
-                "goal-fill": "#DB2955",
-                "goal-text": "#FFFFFF",
-            },
-            "default": {
+            "dark": {
+                "dark": true,
                 "edge": "#c4c9d4",
                 "edge-text": "#c4c9d4",
                 "backwards-edge": "#002ee6",
@@ -566,7 +533,23 @@ filter:
                 "goal-text": "white",
                 "title": "white",
             },
+            "default": {
+                "dark": false,
+                "edge": "#2B303A",
+                "edge-text": "#010065",
+                "backwards-edge": "#7692FF",
+                "backwards-edge-penwidth": 3,
+                "backwards-edge-arrowsize": .5,
+                "reality-fill": "#272727",
+                "reality-text": "#FFFFFF",
+                "fact-fill": "#D2D5DD",
+                "attack-fill": "#ff92cc",
+                "mitigation-fill": "#B9D6F2",
+                "goal-fill": "#5f00c2",
+                "goal-text": "#FFFFFF",
+            },
             "accessible": {
+                "dark": false,
                 "edge": "#2B303A",
                 "edge-text": "#010065",
                 "backwards-edge": "#7692FF",
@@ -584,9 +567,9 @@ filter:
         function convertToDot(yaml) {
             const parsed = jsyaml.load(yaml);
             const font = 'Arial'
-            const themes = dark ? darkThemes : lightThemes;
             const themeName = Object.hasOwnProperty.call(themes, parsed.theme) ? parsed.theme : "default";
             const theme = themes[themeName];
+            dark = theme.dark;
             const header = `// Generated from https://www.deciduous.app/
 digraph {
     // base graph styling
@@ -906,7 +889,10 @@ digraph {
                         // console.log(dot);
                         // Render SVG into the document
                         document.title = `Deciduous - Security Decision Tree Generator (${title})`;
-                        document.body.className = dark ? "dark" : "light";
+                        document.documentElement.className = dark ? "dark" : "light";
+                        if (window.localStorage) {
+                            window.localStorage.setItem("deciduous-dark", dark);
+                        }
                         const svg = graphviz.layout(dot, "svg", "dot");
                         renderTarget.innerHTML = svg;
                         const svgElement = renderTarget.querySelector("svg");
@@ -1167,7 +1153,7 @@ digraph {
             }
             window.addEventListener("hashchange", tryHashRender, false);
             // Themes
-            for (const key in lightThemes) {
+            for (const key in themes) {
                 const option = document.createElement("option");
                 option.id = key;
                 option.innerText = key;
@@ -1279,11 +1265,6 @@ digraph {
                     image.src = lastSvgObjectURL;
                 }
             }, false);
-            document.getElementById("darkToggle").addEventListener("click", (e) => {
-                e.preventDefault();
-                dark = !dark;
-                rerender();
-            });
             // Dropdowns
 
             function toggleClass(element, name) {
