@@ -9,3 +9,4 @@ Theme options include:
 - `theme: default` - the default tree styling
 - `theme: accessible` - for more color differentiation between attack and mitigation nodes
 - `theme: classic` - classic Graphviz styling
+- `theme: dark` - dark mode
