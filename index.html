@@ -985,39 +985,44 @@ digraph {
                     const end = inputSource.selectionEnd;
                     const beforeText = inputSource.value;
                     const newlineIndex = beforeText.lastIndexOf("\n", start - 1);
+                    let nextNewlineIndex = beforeText.indexOf("\n", end - 1);
+                    if (nextNewlineIndex === -1) {
+                        return beforeText.length;
+                    }
+                    const expandedSelection = beforeText.slice(newlineIndex + 1, nextNewlineIndex);
+                    function applyExpandedSelection(replacement) {
+                        inputSource.value = beforeText.slice(0, newlineIndex + 1) + replacement + beforeText.slice(nextNewlineIndex);
+                        if (start !== end) {
+                            selectRange(newlineIndex + 1, end - expandedSelection.length + replacement.length);
+                        } else {
+                            selectRange(start - expandedSelection.length + replacement.length, end - expandedSelection.length + replacement.length);
+                        }
+                        rerender();
+                        syncScroll();
+                    }
                     switch (e.key) {
                         case '[':
                             // Ctrl+[ to unindent line
                             if (newlineIndex + 2 <= beforeText.length && beforeText.slice(newlineIndex + 1, newlineIndex + 3) === "  ") {
                                 inputSource.value = beforeText.slice(0, newlineIndex + 1) + beforeText.slice(newlineIndex + 3);
-                                selectRange(start - 2, end - 2);
-                                rerender();
+                                applyExpandedSelection(expandedSelection.replace(/^  /gm, ""));
                             }
                             break;
                         case ']':
                             // Ctrl+] to indent line
-                            inputSource.value = beforeText.slice(0, newlineIndex + 1) + "  " + beforeText.slice(newlineIndex + 1);
-                            selectRange(start + 2, end + 2);
-                            rerender();
+                            applyExpandedSelection(expandedSelection.replace(/^/gm, "  "));
                             break;
                         case '/':
                             // Ctrl+/ to comment/uncomment line
-                            const expandedSelection = beforeText.slice(newlineIndex + 1, end);
                             let replacement;
                             if (expandedSelection.length >= 2 && expandedSelection.slice(0, 2) === "# ") {
                                 // uncomment
-                                replacement = expandedSelection.replace(/^\# /gm, "");
+                                applyExpandedSelection(expandedSelection.replace(/^\# /gm, ""));
                             } else {
                                 // comment
-                                replacement = expandedSelection.replace(/^(?!$)/gm, "# ");
+                                applyExpandedSelection(expandedSelection.replace(/^(?!$)/gm, "# "));
                             }
-                            inputSource.value = beforeText.slice(0, newlineIndex + 1) + replacement + beforeText.slice(end);
-                            if (start !== end) {
-                                selectRange(newlineIndex + 1, end - expandedSelection.length + replacement.length);
-                            } else {
-                                selectRange(start - expandedSelection.length + replacement.length, end - expandedSelection.length + replacement.length);
-                            }
-                            rerender();
+                            break;
                         default:
                             syncScroll();
                             break;
