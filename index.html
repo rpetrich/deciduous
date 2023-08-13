@@ -838,6 +838,14 @@ digraph {
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
+        if (window.localStorage) {
+            const content = localStorage.getItem("deciduous-content");
+            if (content !== null && content !== "") {
+                inputSource.value = content;
+            }
+        }
+        let rerenderFunction;
+        let updateDividerFunction;
         const downloadLink = document.getElementById("downloadLink");
         const downloadYAMLLink = document.getElementById("downloadYAMLLink");
         const downloadPngLink = document.getElementById("downloadPngLink");
@@ -1064,12 +1072,13 @@ digraph {
                     }
                 }
             }
+            rerenderFunction = rerender;
             function changeEditingState(newState) {
                 editing = newState;
                 if (window.localStorage) {
                     window.localStorage.setItem("deciduous-editing", newState);
                 }
-                updateDivider(currentPercentage);
+                updateDivider();
                 updateDocumentClasses();
             }
             function rerenderAndClearHash() {
@@ -1263,14 +1272,7 @@ digraph {
                     }).catch(e => `# Error loading ${url}: ${e}`).then(importText);
                 }
             }
-            if (!tryHashRender()) {
-                if (window.localStorage) {
-                    const content = localStorage.getItem("deciduous-content");
-                    if (content !== null && content !== "") {
-                        inputSource.value = content;
-                    }
-                }
-            }
+            tryHashRender();
             window.addEventListener("hashchange", tryHashRender, false);
             // Themes
             for (const key in themes) {
@@ -1344,17 +1346,20 @@ digraph {
                 currentPercentage = localStorage.getItem("deciduous-divider") || 40;
             }
             function updateDivider(percent) {
+                if (typeof percent !== "undefined") {
+                    currentPercentage = percent;
+                }
                 if (editing) {
-                    dragger.style.left = percent + "%";
-                    leftPane.style.width = percent + "%";
-                    rightPane.style.left = percent + "%";
-                    rightPane.style.width = (100 - percent) + "%";
+                    dragger.style.left = currentPercentage + "%";
+                    leftPane.style.width = currentPercentage + "%";
+                    rightPane.style.left = currentPercentage + "%";
+                    rightPane.style.width = (100 - currentPercentage) + "%";
                 } else {
                     rightPane.style.left = "0";
                     rightPane.style.width = "100%";
                 }
-                currentPercentage = percent;
             }
+            updateDividerFunction = updateDivider;
             function mouseMove(e) {
                 const clientWidth = document.body.clientWidth;
                 updateDivider(Math.max(Math.min(e.clientX, clientWidth - 200), 200) * 100 / clientWidth);
@@ -1370,7 +1375,7 @@ digraph {
                 document.body.addEventListener("mousemove", mouseMove, false);
                 document.body.addEventListener("mouseup", mouseUp, false);
             }, false);
-            updateDivider(currentPercentage);
+            updateDivider();
             downloadPngLink.addEventListener("mouseover", e => {
                 // Prepare the PNG download link only on demand, since drawing the SVG and compressing a PNG can be slow
                 if (lastPngObjectURL == "") {
@@ -1447,6 +1452,26 @@ digraph {
                     }
                 });
         });
+        // support window.postMessage({ content: "title: hello", editing: false }, "*") to receive new content
+        window.addEventListener("message", (event) => {
+            const data = event.data;
+            if (typeof data === "object" && data !== null) {
+                const { content } = data;
+                if (typeof content === "string") {
+                    inputSource.value = content;
+                    if (rerenderFunction) {
+                        rerenderFunction();
+                    }
+                }
+                if (typeof data.editing === "boolean") {
+                    editing = data.editing;
+                    if (updateDividerFunction) {
+                        updateDividerFunction();
+                    }
+                    updateDocumentClasses();
+                }
+            }
+        }, false);
     </script>
 
 </body>
