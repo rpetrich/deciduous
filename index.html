@@ -1002,14 +1002,20 @@ digraph {
                             break;
                         case '/':
                             // Ctrl+/ to comment/uncomment line
-                            if (newlineIndex + 2 <= beforeText.length && beforeText.slice(newlineIndex + 1, newlineIndex + 3) === "# ") {
+                            const expandedSelection = beforeText.slice(newlineIndex + 1, end);
+                            let replacement;
+                            if (expandedSelection.length >= 2 && expandedSelection.slice(0, 2) === "# ") {
                                 // uncomment
-                                inputSource.value = beforeText.slice(0, newlineIndex + 1) + beforeText.slice(newlineIndex + 3);
-                                selectRange(start - 2, end - 2);
+                                replacement = expandedSelection.replace(/^\# /gm, "");
                             } else {
                                 // comment
-                                inputSource.value = beforeText.slice(0, newlineIndex + 1) + "# " + beforeText.slice(newlineIndex + 1);
-                                selectRange(start + 2, end + 2);
+                                replacement = expandedSelection.replace(/^(?!$)/gm, "# ");
+                            }
+                            inputSource.value = beforeText.slice(0, newlineIndex + 1) + replacement + beforeText.slice(end);
+                            if (start !== end) {
+                                selectRange(newlineIndex + 1, end - expandedSelection.length + replacement.length);
+                            } else {
+                                selectRange(start - expandedSelection.length + replacement.length, end - expandedSelection.length + replacement.length);
                             }
                             rerender();
                         default:
