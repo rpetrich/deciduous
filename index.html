@@ -1011,6 +1011,7 @@ digraph {
                                     if (firstIndex != -1) {
                                         let secondIndex = lastInput.indexOf("- " + matches[1], firstIndex + 4 + matches[2].length);
                                         if (secondIndex != -1) {
+                                            changeEditingState(true);
                                             selectRange(secondIndex + 2, secondIndex + 2 + matches[1].length);
                                         }
                                     }
@@ -1018,6 +1019,7 @@ digraph {
                                     // Select a top level attack, mitigation or goal
                                     const index = lastInput.indexOf("\n- " + node);
                                     if (index != -1) {
+                                        changeEditingState(true);
                                         selectRange(index + 3, index + 3 + node.length);
                                     }
                                 }
@@ -1040,6 +1042,14 @@ digraph {
                         updateTextArea();
                     }
                 }
+            }
+            function changeEditingState(newState) {
+                editing = newState;
+                if (window.localStorage) {
+                    window.localStorage.setItem("deciduous-editing", newState);
+                }
+                updateDivider(currentPercentage);
+                updateDocumentClasses();
             }
             function rerenderAndClearHash() {
                 if (location.hash !== "") {
@@ -1369,21 +1379,11 @@ digraph {
                 }
             }, false);
             document.getElementById("closeEditorButton").addEventListener("click", event => {
-                editing = false;
-                if (window.localStorage) {
-                    window.localStorage.setItem("deciduous-editing", "false");
-                }
-                updateDivider(currentPercentage);
-                updateDocumentClasses();
+                changeEditingState(false);
                 event.preventDefault();
             }, false);
             document.getElementById("editButton").addEventListener("click", event => {
-                editing = true;
-                if (window.localStorage) {
-                    window.localStorage.setItem("deciduous-editing", "true");
-                }
-                updateDivider(currentPercentage);
-                updateDocumentClasses();
+                changeEditingState(true);
                 event.preventDefault();
             }, false);
             // Dropdowns
