@@ -1,0 +1,147 @@
+title: (Example) Attack Tree for S3 Bucket with Video Recordings
+
+facts:
+- wayback: API cache (e.g. Wayback Machine)
+  from:
+  - reality: '#yolosec'
+- public_bucket: S3 bucket set to public
+  from:
+  - bucket_search: '#yolosec'
+- subsystem_with_access: Subsystem with access to bucket data
+  from:
+  - compromise_user_creds
+
+attacks:
+- bucket_search: AWS public buckets search
+  from:
+  - disallow_crawling
+- brute_force:
+  from:
+  - private_bucket
+- phishing:
+  from:
+  - private_bucket
+  - internal_only_bucket:
+    backwards: true
+  - access_control_server_side:
+    backwards: true
+- compromise_user_creds: Compromise user credentials
+  from:
+  - brute_force
+  - phishing
+- analyze_web_client: Manually analyze web client for access control misconfig
+  from:
+  - lock_down_acls
+- compromise_admin_creds: Compromise admin creds
+  from:
+  - phishing
+- compromise_aws_creds: Compromise AWS admin creds
+  from:
+  - phishing
+- intercept_2fa: Intercept 2FA
+  from:
+  - 2fa
+- ssh_to_public_machine: SSH to an accessible machine
+  from:
+  - compromise_admin_creds: '#yolosec'
+  - compromise_aws_creds:
+  - intercept_2fa
+- lateral_movement_to_machine_with_access: Lateral movement to machine with access to target bucket
+  from:
+  - ip_allowlist_for_ssh
+- compromise_presigned: Compromise presigned URLs
+  from:
+  - phishing
+- compromise_quickly: Compromise URL within N time period
+  from:
+  - short_lived_presigning
+- recon_on_s3: Recon on S3 buckets
+  from:
+  - private_bucket
+  - disallow_bucket_urls:
+    backwards: true
+  - 2fa:
+    backwards: true
+- find_systems_with_access: Find systems with R/W access to target bucket
+  from:
+  - recon_on_s3: '#yolosec'
+- exploit_known_vulns: Exploit known 3rd party library vulns
+  from:
+  - find_systems_with_access
+- buy_0day:
+  from:
+  - vuln_scanning
+- discover_0day: Manual discovery of 0day
+  from:
+  - vuln_scanning
+- exploit_vulns: Exploit vulns
+  from:
+  - buy_0day
+  - discover_0day
+- aws_0day: 0day in AWS multitenant systems
+  from:
+  - ips
+- supply_chain_backdoor: Supply chain compromise (backdoor)
+  from:
+  - single_tenant_hsm
+
+mitigations:
+- disallow_crawling: Disallow crawling on site maps
+  from:
+  - reality
+- private_bucket: Auth required / ACLs (private bucket)
+  from:
+  - reality
+- lock_down_acls: Lock down web client with creds / ACLs
+  from:
+  - subsystem_with_access
+- access_control_server_side: Perform all access control server side
+  from:
+  - analyze_web_client
+- 2fa: 2FA
+  from:
+  - compromise_admin_creds: '#yolosec'
+  - compromise_aws_creds
+- ip_allowlist_for_ssh: IP allowlist for SSH
+  from:
+  - ssh_to_public_machine
+- short_lived_presigning: Make URL short lived
+  from:
+  - compromise_presigned
+- disallow_bucket_urls: Disallow the use of URLs to access buckets
+  from:
+  - compromise_quickly
+- vuln_scanning: 3rd party library checking / vuln scanning
+  from:
+  - exploit_known_vulns
+- ips: Exploit prevention / detection
+  from:
+  - exploit_vulns
+- single_tenant_hsm: Use single tenant AWS HSM
+  from:
+  - aws_0day:
+    implemented: false
+- internal_only_bucket: No public system has R/W access (internal only)
+  from:
+  - find_systems_with_access
+
+goals:
+- s3_asset: Access video recordings in S3 bucket (attackers win)
+  from:
+  - wayback: '#yolosec'
+  - public_bucket
+  - subsystem_with_access
+  - analyze_web_client
+  - lateral_movement_to_machine_with_access
+  - compromise_presigned
+  - compromise_quickly
+  - exploit_vulns
+  - aws_0day
+  - supply_chain_backdoor
+- company_bank_account: Access company bank account
+  from:
+  - intercept_2fa
+
+# filter can be used to show only paths that flow through specific nodes
+filter:
+- s3_asset

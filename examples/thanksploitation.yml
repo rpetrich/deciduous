@@ -1,0 +1,111 @@
+title: Rick & Morty's Thanksploitation Decision Tree
+
+attacks:
+- brainwash_wrangler: Brainwash presidential turkey wrangler pre-ceremony
+  from:
+  - reality: '#yolosec'
+- become_turkey: Turn into a turkey 
+  from:
+  - brainwash_wrangler
+- infiltrate_turkeys: Infiltrate potential turkey pardonee population
+  from:
+  - become_turkey
+  - sneak_onboard
+- chosen_turkey: Be selected at the National Thanksgiving Turkey Presentation
+  from:
+  - infiltrate_turkeys
+  - turkey_behavior
+- ghost_corp: Set up ghost corporations to manufacture the vehicles
+  from:
+  - armored_transport
+  - euthanize_wrangler:
+    backwards: true
+- pass_audit: Pass audit through unexplained means
+  from:
+  - audit_vehicles
+- access_computers: Gain access to vehicle corp's central computers
+  from:
+  - ghost_corp
+  - pass_audit
+- track_transport: Track the real armored transports
+  from:
+  - access_computers
+  - flesh_robots
+  - decoy_vehicles
+- stealth_mode: Land flying ship in stealth mode on top of transport
+  from:
+  - face_blind
+  - armed_marines
+- sneak_onboard: Sneak onboard the armored transport
+  from:
+  - track_transport
+  - stealth_mode
+  - roof_combat
+- face_blind: Exploit marines' turkey-face blindness by turning into a turkey
+  from:
+  - armed_marines
+- flesh_robots: Create flesh-covered robots of self as decoys
+  from:
+  - monitor_home
+- jam_radios: Jam the marines' radios
+  from: 
+  - investigate_noise
+- roof_combat: Engage marines in physical combat
+  from:
+  - jam_radios
+- turkey_behavior: Act like a turkey to avoid detection by President
+  from:
+  - president_turkey
+
+mitigations:
+- euthanize_wrangler: Euthanize the turkey wrangler
+  from:
+  - brainwash_wrangler
+- armored_transport: Transport the turkeys in armored military vehicles
+  from:
+  - reality
+- audit_vehicles: Audit the vehicle manufacturers
+  from:
+  - ghost_corp
+- decoy_vehicles: Deploy decoy vehicles to obfuscate real transport
+  from:
+  - access_computers
+- armed_marines: Put fully armed marines in the real transport vehicle
+  from:
+  - track_transport
+- turkey_marines: Turn marines into turkeys to mitigate turkey-face blindness
+  from:
+  - face_blind
+- id_chips: Track turkey marines with swallowed ID chips
+  from: 
+  - turkey_marines
+- monitor_home: Monitor Rick's house the day of the ceremony
+  from:
+  - reality
+- investigate_noise: Marines investigate noise on roof of vehicle
+  from:
+  - stealth_mode
+- call_backup: Marines call for backup
+  from:
+  - investigate_noise
+- blaine_box: Bring in David Blaine box to detect decoy flesh robots
+  from:
+  - flesh_robots
+- scan_transport: Scan transport truck for ID chip anomalies 
+  from:
+  - blaine_box
+  - id_chips
+  - sneak_onboard
+- president_turkey: Turn President into turkey to hunt for Rick in the pen
+  from:
+  - infiltrate_turkeys
+  - scan_transport
+- attack_rick: President detects and attacks Rick
+  from: 
+  - turkey_behavior
+
+
+goals:
+- receive_pardon: Receive federal pardon (Rick wins)
+  from:
+  - chosen_turkey

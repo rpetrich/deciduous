@@ -1,0 +1,118 @@
+title: (Example) Attack Tree for Cryptominer in a Container
+
+facts:
+- public_socket: Publicly exposed Docker Socket
+  from:
+  -  shodan: "#yolosec"
+
+attacks:
+- shodan: Run Shodan or scanning tool
+  from:
+  - reality
+- schedule_container: Schedule their own container
+  from:
+  - public_socket
+- scan_apps: Scan for vulnerable web apps (eg WP)
+  from:
+  - private_socket
+- exploit_vuln: Exploit a known vuln
+  from:
+  - scan_apps
+- download_miner: Download cryptominer
+  from:
+  - exploit_vuln
+- scan_repos: Scan public repos for keys
+  from:
+  - waf:
+    backwards: true
+  - reality
+- access_con: Access hosted container service
+  from:
+  - scan_repos: "#yolosec"
+  - scan_dock
+- scan_dock: Scan public Docker images for keys
+  from:
+  - key_scan
+  - key_rotation
+- schedule_priv: Schedule a privileged container
+  from:
+  - access_con
+  - public_socket
+- escape_container: Escape container by writing on host
+  from:
+  - schedule_priv
+- create_systemd: Create systemd daemon
+  from:
+  - escape_container
+- fileless_miner: Fileless cryptominer
+  from:
+  - host_monitoring
+- steal_maple: Steal 1,337 tons of maple syrup
+  from:
+  - reality
+  - resource_monitoring:
+    backwards: true
+  - roles_ids:
+    backwards: true
+- cfo_breakin: Break into CFO's house
+  from:
+  - steal_maple
+- plant_syrup: Plant maple syrup in basement
+  from:
+  - cfo_breakin
+- bone_distract: Distract with bone
+  from:
+  - good_boi
+- blackmail_cfo: Blackmail CFO into sharing cloud owner creds
+  from:
+  - plant_syrup
+  - bone_distract
+
+
+mitigations:
+- private_socket: Not exposing Docker sockets
+  from:
+  - shodan
+- vuln_scan: Vuln scanning in dev
+  from:
+  - scan_apps
+- waf: WAF
+  from:
+  - exploit_vuln
+- key_scan: Scan repos for key-like things
+  from:
+  - scan_repos
+- key_rotation: Rotate keys
+  from:
+  - scan_repos
+- roles_ids: Use roles or managed identities
+  from:
+  - scan_dock
+- bill_alerts: Billing alerts on autoscaling
+  from:
+  - schedule_container
+- policy_violation: Orchestrator policy violation
+  from:
+  - schedule_priv
+- immutable_hosts: Immutable hosts
+  from:
+  - escape_container
+- host_monitoring: Host security monitoring
+  from:
+  - create_systemd
+  - download_miner
+- resource_monitoring: Resource usage monitoring
+  from:
+  - fileless_miner
+- good_boi: Puppy goes bork bork
+  from:
+  - plant_syrup
+
+goals:
+- cryptomining: Run a cryptominer in a cloud-hosted container
+  from:
+  - schedule_container
+  - download_miner
+  - create_systemd
+  - fileless_miner
+  - blackmail_cfo
