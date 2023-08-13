@@ -16,15 +16,15 @@ Theme options include:
 For a more detailed write-up of using decision trees in practice, refer to the book [_Security Chaos Engineering: Sustaining Resilience in Software and Systems._](https://www.securitychaoseng.com/)
 
 ## Examples
-Example trees for #inspo are hosted in [/examples](https://github.com/rpetrich/deciduous/tree/examples/examples).
+Example trees for #inspo are hosted in [/examples](./examples).
 
 #### Security
-* [S3 Bucket with Video Recordings](https://github.com/rpetrich/deciduous/blob/examples/examples/s3-bucket-video-recordings.yaml)
-* [Cryptominer in a Container](https://github.com/rpetrich/deciduous/blob/examples/examples/cryptominer-in-container.yaml) ([video explanation](https://youtu.be/oJ3iSyhWb5U?t=460))
+* [S3 Bucket with Video Recordings](./examples/s3-bucket-video-recordings.yaml)
+* [Cryptominer in a Container](./examples/cryptominer-in-container.yaml) ([video explanation](https://youtu.be/oJ3iSyhWb5U?t=460))
 
 #### Reliability
-* [Missing Logs](https://github.com/rpetrich/deciduous/blob/examples/examples/missing-logs.yaml) ([video explanation](https://www.youtube.com/watch?v=DGdtfB1eY98))
-* [Unrealistic Traces](https://github.com/rpetrich/deciduous/blob/examples/examples/unrealistic-traces.yaml)
+* [Missing Logs](./examples/examples/missing-logs.yaml) ([video explanation](https://www.youtube.com/watch?v=DGdtfB1eY98))
+* [Unrealistic Traces](./examples/unrealistic-traces.yaml)
 
 #### Surrealism
-* [Thanksploitation](https://github.com/rpetrich/deciduous/blob/examples/examples/thanksploitation.yml) scenario from Rick and Morty ([blog post](https://kellyshortridge.com/blog/posts/rick-morty-thanksploitation-decision-tree/))
+* [Thanksploitation](./examples/thanksploitation.yml) scenario from Rick and Morty ([blog post](https://kellyshortridge.com/blog/posts/rick-morty-thanksploitation-decision-tree/))
