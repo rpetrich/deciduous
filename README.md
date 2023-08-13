@@ -11,6 +11,7 @@ Theme options include:
 - `theme: default` - the default tree styling
 - `theme: accessible` - for more color differentiation between attack and mitigation nodes
 - `theme: classic` - classic Graphviz styling
+- `theme: dark` - dark mode
 
 For a more detailed write-up of using decision trees in practice, refer to the book [_Security Chaos Engineering: Sustaining Resilience in Software and Systems._](https://www.securitychaoseng.com/)
 
