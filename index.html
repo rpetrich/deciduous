@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width", initial-scale=1, maximum-scale=1>
-    <meta name="description" property="og:description" content="Deciduous is a security decision tree generator that serves as a threat modeling tool for engineering teams who want to create attack trees in the spirit of Security Chaos Engineering">
+    <meta name="description" property="og:description" content="Deciduous is a decision tree generator that simplifies modeling adverse scenarios for engineering teams who want to understand their systems' resilience to failure">
     <meta name="author" content="Ryan Petrich, Kelly Shortridge">
-    <meta property="og:description" content="Deciduous is a security decision tree generator that serves as a threat modeling tool for engineering teams who want to create attack trees in the spirit of Security Chaos Engineering" />
+    <meta property="og:description" content="Deciduous is a decision tree generator that simplifies modeling adverse scenarios for engineering teams who want to understand their systems' resilience to failure" />
     <meta property="og:title" content="Deciduous - Decision Tree Generator" />
     <meta property="og:image" content="./deciduous-logo-social.jpg" />
     <meta property="og:url" content="https://www.deciduous.app/" />
@@ -1355,6 +1355,20 @@ digraph {
                 toggleClass(document.getElementById("importWrapper"), "active");
                 e.preventDefault();
             }, false);
+            downloadWrapper = document.getElementById("downloadWrapper");
+            downloadHoverArea = document.getElementById("downloadHoverArea");
+            importWrapper = document.getElementById("importWrapper");
+            importHoverArea = document.getElementById("importHoverArea");
+            document.addEventListener("click", function(event) {
+                if(downloadWrapper.classList.contains("active") && !event.target.isEqualNode(downloadWrapper) && !event.target.isEqualNode(downloadHoverArea)){
+                    downloadWrapper.classList.remove("active");
+                    }
+                });
+             document.addEventListener("click", function(event) {
+                if(importWrapper.classList.contains("active") && !event.target.isEqualNode(importWrapper) && !event.target.isEqualNode(importHoverArea)){
+                    importWrapper.classList.remove("active");
+                    }
+                });
         });
     </script>
 
