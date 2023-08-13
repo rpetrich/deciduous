@@ -1,5 +1,9 @@
 # Deciduous
-A web app that simplifies building attack decision trees as described in the Security Chaos Engineering report. Hosted at https://www.deciduous.app/
+A web app that simplifies building decision trees to model adverse scenarios. Hosted at https://www.deciduous.app/
+
+It allows you to document your assumptions about how a system, service, app, etc. will respond to adverse events. Its heritage is in helping defenders anticipate attacker behavior and prepare mitigations accordingly, but it also applies to anticipating reliability-related failures, too.
+
+It is especially useful as a foundation to conduct resilience stress testing / chaos experimentation, allowing you to continually refine your mental models of a system with reality. It prompts you to consider your beliefs about how failure can unfold across your system, which can inform design improvements to better sustain resilience to failure scenarios.
 
 How to / getting started guide: https://kellyshortridge.com/blog/posts/deciduous-attack-tree-app/
 
