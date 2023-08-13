@@ -42,6 +42,10 @@
             background: black;
         }
         #leftPane {
+            display: none;
+        }
+        .editing #leftPane {
+            display: block;
             position: absolute;
             width: 40%;
             height: 100%;
@@ -60,10 +64,22 @@
             padding-left: 20px;
             padding-top: 9px;
             box-sizing: border-box;
+            z-index: 2;
         }
         .dark .sectionHeader {
             color: #9da5f1;
             border-bottom: 1px solid #333;
+        }
+        #closeEditorButton {
+            float: right;
+            margin-right: 10px;
+            border: 0;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: transparent;
+            font-size: 100%;
+            font-family: arial;
+            color: inherit;
         }
         #inputSource, #highlighting {
             position: absolute;
@@ -110,11 +126,14 @@
         }
         .contentArea {
             position: absolute;
-            left: 40%;
-            width: 60%;
+            width: 100%;
             height: 100%;
             overflow: auto;
             font-family: 'Josefin Sans', sans-serif;
+        }
+        .editing .contentArea {
+            left: 40%;
+            width: 60%;
         }
         .right-header {
             display: flex;
@@ -150,6 +169,9 @@
             text-align: left;
             border-radius: 0 4px 4px 4px;
         }
+        select {
+            font-family: inherit;
+        }
         .dark .dropdownWrapper ul {
             background: #323743;
         }
@@ -161,7 +183,7 @@
         }
         .dropdownWrapper .dropdownHoverArea::after {
             content: " ▼";
-            font-size: 33%;
+            font-size: 50%;
         }
         .dropdownWrapper ul li {
             margin: 0;
@@ -175,7 +197,10 @@
         }
         .dark .dropdownWrapper.active .dropdownHoverArea {
             background: #323743;
-        } 
+        }
+        .editing #editButton, .editing .edit-button {
+            display: none;
+        }
         #renderTarget {
             display: inline-block;
             position: relative;
@@ -192,10 +217,13 @@
         .copyright {
             text-align: center;
         }
-        #highlighting {
+        .plainText #highlighting {
+            display: none;
+        }
+        #highlighting, .plainText #inputSource {
             color: grey;
         }
-        .dark #highlighting {
+        .dark #highlighting, .dark .plainText #inputSource {
             color: #B8B7B7;
         }
         #highlighting .punctuation {
@@ -227,12 +255,29 @@
         }
         #highlighting .comment {
         }
-        #dragger {
+        .editing #dragger {
             cursor: col-resize;
             position: absolute;
             height: 100%;
             width: 3px;
         }
+        button {
+            font-family: inherit;
+        }
+        .edit-button {
+            background-color: #9da5f1;
+            color: white;
+            border-radius: 10px;
+            border: none;
+            padding: 2px 10px 2px 10px;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        .edit-button a, .edit-button a.visited {
+            color: white;
+            text-decoration: none;
+        }
+
         @media print {
             .logo {
                 position: absolute;
@@ -269,23 +314,31 @@
             .copyright {
                 position: fixed;
                 bottom: 0;
-
+            }
         }
     </style>
     <script>
         // load previous dark mode setting as soon as possible
-        let dark = false;
-        if (window.localStorage) {
-            if (dark = window.localStorage.getItem("deciduous-dark") === "true") {
-                document.documentElement.className = "dark";
+        let dark = window.localStorage && (window.localStorage.getItem("deciduous-dark") === "true");
+        let editing = !window.localStorage || (window.localStorage.getItem("deciduous-editing") !== "false");
+        function updateDocumentClasses() {
+            let documentClasses = [dark ? "dark" : "light"];
+            if (editing) {
+                documentClasses.push("editing");
             }
+            const userAgent = window.navigator.userAgent;
+            if (/iPhone/.test(userAgent) || /iPad/.test(userAgent)) {
+                documentClasses.push("plainText");
+            }
+            document.documentElement.className = documentClasses.join(" ");
         }
+        updateDocumentClasses();
     </script>
 </head>
 
 <body>
     <div id="leftPane">
-        <h2 class="sectionHeader">Text Editor</h2>
+        <h2 class="sectionHeader">Text Editor<button id="closeEditorButton">×</button></h2>
         <textarea id="inputSource" spellcheck="false">
 title: (Example) Attack Tree for S3 Bucket with Video Recordings
 
@@ -443,6 +496,7 @@ filter:
                 <img src="./deciduous-logo.png" alt="Deciduous logo" height="75" width="198" class="logo-image">
             </div>
             <div class="menuWrapper">
+                <button class="edit-button"><a href="#" id="editButton">Edit</a></button>
                 <label for="themePicker">Theme: </label><select id="themePicker"></select>
                 <div id="downloadWrapper" class="dropdownWrapper">
                     <a href="#" id="downloadHoverArea" class="dropdownHoverArea">Download</a>
@@ -907,7 +961,7 @@ digraph {
                         // console.log(dot);
                         // Render SVG into the document
                         document.title = `Deciduous - Decision Tree Generator (${title})`;
-                        document.documentElement.className = dark ? "dark" : "light";
+                        updateDocumentClasses();
                         if (window.localStorage) {
                             window.localStorage.setItem("deciduous-dark", dark);
                         }
@@ -978,6 +1032,7 @@ digraph {
                                     if (firstIndex != -1) {
                                         let secondIndex = lastInput.indexOf("- " + matches[1], firstIndex + 4 + matches[2].length);
                                         if (secondIndex != -1) {
+                                            changeEditingState(true);
                                             selectRange(secondIndex + 2, secondIndex + 2 + matches[1].length);
                                         }
                                     }
@@ -985,6 +1040,7 @@ digraph {
                                     // Select a top level attack, mitigation or goal
                                     const index = lastInput.indexOf("\n- " + node);
                                     if (index != -1) {
+                                        changeEditingState(true);
                                         selectRange(index + 3, index + 3 + node.length);
                                     }
                                 }
@@ -1007,6 +1063,14 @@ digraph {
                         updateTextArea();
                     }
                 }
+            }
+            function changeEditingState(newState) {
+                editing = newState;
+                if (window.localStorage) {
+                    window.localStorage.setItem("deciduous-editing", newState);
+                }
+                updateDivider(currentPercentage);
+                updateDocumentClasses();
             }
             function rerenderAndClearHash() {
                 if (location.hash !== "") {
@@ -1280,10 +1344,15 @@ digraph {
                 currentPercentage = localStorage.getItem("deciduous-divider") || 40;
             }
             function updateDivider(percent) {
-                dragger.style.left = percent + "%";
-                leftPane.style.width = percent + "%";
-                rightPane.style.left = percent + "%";
-                rightPane.style.width = (100 - percent) + "%";
+                if (editing) {
+                    dragger.style.left = percent + "%";
+                    leftPane.style.width = percent + "%";
+                    rightPane.style.left = percent + "%";
+                    rightPane.style.width = (100 - percent) + "%";
+                } else {
+                    rightPane.style.left = "0";
+                    rightPane.style.width = "100%";
+                }
                 currentPercentage = percent;
             }
             function mouseMove(e) {
@@ -1329,6 +1398,14 @@ digraph {
                     };
                     image.src = lastSvgObjectURL;
                 }
+            }, false);
+            document.getElementById("closeEditorButton").addEventListener("click", event => {
+                changeEditingState(false);
+                event.preventDefault();
+            }, false);
+            document.getElementById("editButton").addEventListener("click", event => {
+                changeEditingState(true);
+                event.preventDefault();
             }, false);
             // Dropdowns
 
