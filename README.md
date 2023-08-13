@@ -3,15 +3,14 @@ A web app that simplifies building decision trees to model adverse scenarios. Ho
 
 It allows you to document your assumptions about how a system, service, app, etc. will respond to adverse events. Its heritage is in helping defenders anticipate attacker behavior and prepare mitigations accordingly, but it also applies to anticipating reliability-related failures, too.
 
-It is especially useful as a foundation to conduct resilience stress testing / chaos experimentation, allowing you to continually refine your mental models of a system with reality. It prompts you to consider your beliefs about how failure can unfold across your system, which can inform design improvements to better sustain resilience to failure scenarios.
+It is especially useful as a foundation to conduct resilience stress testing / chaos experimentation, allowing you to continually refine your mental models of a system with reality. The end goal of using decision trees is to document your beliefs about how failure will unfold across your system in a given scenario, which can inform design improvements to better sustain resilience to that failure.
 
-How to / getting started guide: https://kellyshortridge.com/blog/posts/deciduous-attack-tree-app/
+Getting started guide: https://kellyshortridge.com/blog/posts/deciduous-attack-tree-app/
 
 Theme options include:
 - `theme: default` - the default tree styling
 - `theme: accessible` - for more color differentiation between attack and mitigation nodes
 - `theme: classic` - classic Graphviz styling
-
 
 ## Examples
 Find example trees for #inspo in [/examples](https://github.com/rpetrich/deciduous/tree/examples/examples).
@@ -25,4 +24,4 @@ Find example trees for #inspo in [/examples](https://github.com/rpetrich/deciduo
 * [Unrealistic Traces](https://github.com/rpetrich/deciduous/blob/examples/examples/unrealistic-traces.yaml)
 
 #### Surrealism
-* [Thanksploitation](https://github.com/rpetrich/deciduous/blob/examples/examples/thanksploitation.yml) scenario from Rick and Morty ([blog post](https://kellyshortridge.com/blog/posts/rick-morty-thanksploitation-decision-tree/)
+* [Thanksploitation](https://github.com/rpetrich/deciduous/blob/examples/examples/thanksploitation.yml) scenario from Rick and Morty ([blog post](https://kellyshortridge.com/blog/posts/rick-morty-thanksploitation-decision-tree/))
