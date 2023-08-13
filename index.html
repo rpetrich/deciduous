@@ -862,12 +862,18 @@ digraph {
                             }
                             i++;
                         }
+                        let inComment = false;
                         for (const token of (newInput[newInput.length-1] == "\n" ? newInput + " " : newInput).split(/\b/)) {
-                            if (Object.hasOwnProperty.call(types, token)) {
+                            if (Object.hasOwnProperty.call(types, token) && !inComment) {
                                 insertTextNode(current);
                                 current = "";
                                 insertSpan(token, types[token]);
                             } else {
+                                if (/#/.test(token)) {
+                                    inComment = true;
+                                } else if (/^/.test(token)) {
+                                    inComment = false;
+                                }
                                 current += token;
                             }
                         }
