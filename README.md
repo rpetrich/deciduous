@@ -12,10 +12,10 @@ Theme options include:
 - `theme: accessible` - for more color differentiation between attack and mitigation nodes
 - `theme: classic` - classic Graphviz styling
 
-More detailed write-up of using decision trees in practice in the book [_Security Chaos Engineering: Sustaining Resilience in Software and Systems._](https://www.securitychaoseng.com/)
+For a more detailed write-up of using decision trees in practice, refer to the book [_Security Chaos Engineering: Sustaining Resilience in Software and Systems._](https://www.securitychaoseng.com/)
 
 ## Examples
-Find example trees for #inspo in [/examples](https://github.com/rpetrich/deciduous/tree/examples/examples).
+Example trees for #inspo are hosted in [/examples](https://github.com/rpetrich/deciduous/tree/examples/examples).
 
 #### Security
 * [S3 Bucket with Video Recordings](https://github.com/rpetrich/deciduous/blob/examples/examples/s3-bucket-video-recordings.yaml)
