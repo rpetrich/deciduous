@@ -1311,12 +1311,13 @@ digraph {
                             return;
                         }
                         const canvas = document.createElement("canvas");
-                        canvas.width = image.width;
-                        canvas.height = image.height;
+                        const scale = 2;
+                        canvas.width = image.width * scale;
+                        canvas.height = image.height * scale;
                         canvas.style.display = "none";
                         document.body.appendChild(canvas);
                         const context = canvas.getContext("2d");
-                        context.drawImage(image, 0, 0);
+                        context.drawImage(image, 0, 0, image.width * scale, image.height * scale);
                         canvas.toBlob(blob => {
                             blob = new Blob([blob, "\n// deciduous:" + btoa(inputSource.value)], { type: "image/png" });
                             if (lastPngObjectURL != "") {
