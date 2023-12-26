@@ -1,0 +1,31 @@
+{
+  "name": "deciduous",
+  "version": "0.0.1",
+  "description": "App that simplifies building decision trees to model adverse scenarios",
+  "main": "layout.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "build": "tsc --strict --lib es2017 --module es2022 layout.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rpetrich/deciduous.git"
+  },
+  "keywords": [
+    "attack",
+    "decision",
+    "tree",
+    "security"
+  ],
+  "author": "Ryan Petrich <rpetrich@gmail.com> and Kelly Shortridge",
+  "license": "GPLv2",
+  "bugs": {
+    "url": "https://github.com/rpetrich/deciduous/issues"
+  },
+  "homepage": "https://github.com/rpetrich/deciduous#readme",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
