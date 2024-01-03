@@ -523,7 +523,7 @@ filter:
     </div>
     <div id="dragger"></div>
     <script type="module">
-        import { themes, convertToDot, embedDotComment, embedSvgComment, trailingPngComment } from "./layout.js";
+        import { themes, convertToDot, embedDotComment, embedSvgComment, trailingPngComment, parseEmbeddedComment } from "./layout.js";
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
@@ -903,15 +903,8 @@ filter:
             inputSource.addEventListener("dragover", (event) => {
                 event.preventDefault();
             }, false);
-            function parseHiddenComment(text) {
-                // extract hidden embedded comment
-                const match = text.match(/\n(\/\/|<!--) deciduous:([a-zA-Z0-9]+=*)( -->)?$/);
-                if (match) {
-                    return atob(match[2]);
-                }
-            }
             function importText(text) {
-                const hiddenComment = parseHiddenComment(text);
+                const hiddenComment = parseEmbeddedComment(text);
                 inputSource.value = hiddenComment !== undefined ? hiddenComment : text;
                 rerender();
             }
@@ -1012,7 +1005,7 @@ filter:
                             toggleClass(document.getElementById("importWrapper"), "active");
                             const { result } = event.target;
                             if (!/\.yaml$/.test(file.name)) {
-                                const hiddenComment = parseHiddenComment(result);
+                                const hiddenComment = parseEmbeddedComment(result);
                                 if (hiddenComment === undefined) {
                                     alert(file.name + " is not a valid Deciduous output file");
                                     return;

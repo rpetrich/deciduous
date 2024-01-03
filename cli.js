@@ -1,4 +1,4 @@
-import { convertToDot, embedDotComment, embedSvgComment, trailingPngComment } from "./layout.js";
+import { convertToDot, embedDotComment, embedSvgComment, trailingPngComment, parseEmbeddedComment } from "./layout.js";
 
 import { load } from "js-yaml";
 import { promises as fs } from "node:fs";
@@ -15,9 +15,40 @@ if (args.length != 2) {
 
 const graphviz = Graphviz.load();
 
+function fileExtension(path) {
+	const result = path.match(/\.\w+$/)[0];
+	switch (result) {
+		case ".svg":
+		case ".dot":
+		case ".png":
+		case ".yaml":
+			return result;
+		default:
+			throw new Error(`invalid file path: ${path}; only support .svg, .dot, .png, and .yaml`);
+	}
+}
+
 const [inputFile, outputFile] = args;
 
-const newInput = await fs.readFile(args[0], "utf8");
+let newInput;
+
+switch (fileExtension(inputFile)) {
+	case ".yaml":
+		newInput = await fs.readFile(inputFile, "utf8");
+		break;
+	case ".dot":
+	case ".svg":
+	case ".png": {
+		const fileContents = await fs.readFile(inputFile, "latin1");
+		newInput = parseEmbeddedComment(fileContents);
+		if (newInput === undefined) {
+			console.error(`${inputFile} is not a compatible deciduous image.`)
+			process.exit(1);
+		}
+		break;
+	}
+}
+
 const parsed = load(newInput);
 const { dot } = convertToDot(parsed);
 
@@ -33,15 +64,19 @@ function svgtoimgAsync(args) {
 	});
 }
 
-switch (outputFile.match(/\.\w+$/)[0]) {
-	case ".svg": {
-		const svg = (await graphviz).layout(dot, "svg", "dot");
-		const branded = embedSvgComment(svg, newInput);
-		await fs.writeFile(outputFile, branded, "utf-8");
+switch (fileExtension(outputFile)) {
+	case ".yaml": {
+		await fs.writeFile(outputFile, newInput);
 		break;
 	}
 	case ".dot": {
 		const branded = embedDotComment(dot, newInput);
+		await fs.writeFile(outputFile, branded, "utf-8");
+		break;
+	}
+	case ".svg": {
+		const svg = (await graphviz).layout(dot, "svg", "dot");
+		const branded = embedSvgComment(svg, newInput);
 		await fs.writeFile(outputFile, branded, "utf-8");
 		break;
 	}
@@ -50,10 +85,6 @@ switch (outputFile.match(/\.\w+$/)[0]) {
 		const png = await svgtoimgAsync(svg);
 		const branded = Buffer.concat([png, Buffer.from(trailingPngComment(newInput))]);
 		await fs.writeFile(outputFile, png);
-		break;
-	}
-	default: {
-		console.log("invalid output filename: " + outputFile);
 		break;
 	}
 }
