@@ -10,6 +10,9 @@
   "scripts": {
     "build": "tsc --strict --lib es2017 --module es2022 layout.ts"
   },
+  "bin": {
+    "deciduous": "./cli-cjs.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rpetrich/deciduous.git"

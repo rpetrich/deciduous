@@ -425,3 +425,12 @@ export function embedSvgComment(svg: string, input: string): string {
 export function trailingPngComment(input: string): string {
     return "\n// deciduous:" + btoa(input);
 }
+
+export function parseEmbeddedComment(text: string): string | undefined {
+    // extract hidden embedded comment
+    const match = text.match(/\n(\/\/|<!--) deciduous:([a-zA-Z0-9]+=*)( -->)?$/);
+    if (match) {
+        return atob(match[2]);
+    }
+    return undefined;
+}
