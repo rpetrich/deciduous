@@ -523,7 +523,7 @@ filter:
     </div>
     <div id="dragger"></div>
     <script type="module">
-        import { themes, convertToDot } from "./layout.js";
+        import { themes, convertToDot, embedDotComment, embedSvgComment, trailingPngComment } from "./layout.js";
         const renderTarget = document.getElementById("renderTarget");
         const errorTarget = document.getElementById("errorTarget");
         const inputSource = document.getElementById("inputSource");
@@ -675,7 +675,7 @@ filter:
                         // Create a download link
                         if (window.File && URL.createObjectURL) {
                             const encodedInput = btoa(newInput);
-                            const file = new File([dot + "// deciduous:" + encodedInput], "graph.dot", {
+                            const file = new File([embedDotComment(dot, newInput)], "graph.dot", {
                                 "type": "text/vnd.graphviz",
                             }
                             );
@@ -688,7 +688,7 @@ filter:
                             }
                             lastObjectURL = newObjectURL;
 
-                            const svgFile = new File([svg + "<!-- deciduous:" + encodedInput + " -->"], "graph.svg", {
+                            const svgFile = new File([embedSvgComment(svg, newInput)], "graph.svg", {
                                 "type": "image/svg+xml",
                             });
 
@@ -1083,7 +1083,7 @@ filter:
                         const context = canvas.getContext("2d");
                         context.drawImage(image, 0, 0, image.width * scale, image.height * scale);
                         canvas.toBlob(blob => {
-                            blob = new Blob([blob, "\n// deciduous:" + btoa(inputSource.value)], { type: "image/png" });
+                            blob = new Blob([blob, trailingPngComment(inputSource.value)], { type: "image/png" });
                             if (lastPngObjectURL != "") {
                                 return;
                             }

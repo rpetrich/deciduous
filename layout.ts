@@ -405,9 +405,23 @@ ${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
     const footer = "\n\n}\n";
 
     return {
-        dot: header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n")  + footer,
+        dot: header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n") + footer,
         title: typeof parsed.title === "string" ? parsed.title : "",
         types,
         themeName,
     };
+}
+
+declare function btoa(text: string): string;
+
+export function embedDotComment(dot: string, input: string): string {
+    return dot + "// deciduous:" + btoa(input);
+}
+
+export function embedSvgComment(svg: string, input: string): string {
+    return svg + "<!-- deciduous:" + btoa(input) + " -->";
+}
+
+export function trailingPngComment(input: string): string {
+    return "\n// deciduous:" + btoa(input);
 }
