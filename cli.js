@@ -84,7 +84,7 @@ switch (fileExtension(outputFile)) {
 		const svg = (await graphviz).layout(dot, "svg", "dot");
 		const png = await svgtoimgAsync(svg);
 		const branded = Buffer.concat([png, Buffer.from(trailingPngComment(newInput))]);
-		await fs.writeFile(outputFile, png);
+		await fs.writeFile(outputFile, branded);
 		break;
 	}
 }
