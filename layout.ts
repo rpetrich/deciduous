@@ -110,8 +110,8 @@ type Theme = {
     "backwards-edge": string;
     "backwards-edge-penwidth"?: number;
     "backwards-edge-arrowsize"?: number;
-    "reality-fill"?: string;
-    "reality-text"?: string;
+    "reality-fill": string;
+    "reality-text": string;
     "fact-fill": string;
     "fact-text"?: string;
     "attack-fill": string;
@@ -122,9 +122,17 @@ type Theme = {
     "goal-text": string;
 };
 
+function firstProperty<T>(obj: { [key: string]: T }): [string, T] {
+    const entries = Object.entries(obj);
+    if (entries.length === 0) {
+        throw new Error("expected at least one key in object");
+    }
+    return entries[0];
+}
+
 function parseFrom(raw: FromDeclaration): ParsedFrom {
     if (typeof raw == "object") {
-        const [fromName, label] = Object.entries(raw)[0];
+        const [fromName, label] = firstProperty(raw);
         const result: ParsedFrom = {
             name: fromName,
             backwards: typeof raw.backwards === "boolean" ? raw.backwards : false,
@@ -190,24 +198,26 @@ export function convertToDot(parsed: Input): RenderedOutput {
     const themeName = typeof parsed.theme === "string" && Object.hasOwnProperty.call(themes, parsed.theme) ? parsed.theme : "default";
     const theme = themes[themeName] as Theme;
     const dark = theme.dark ? true : false;
+
+    const propertiesOfReality = { fillcolor: theme["reality-fill"], fontcolor: theme["reality-text"] } as const;
     const header = `// Generated from https://www.deciduous.app/
 digraph {
-// base graph styling
-rankdir="TB";
-splines=true;
-overlap=false;
-nodesep="0.2";
-ranksep="0.4";
-label=${JSON.stringify(typeof parsed.title === "string" ? parsed.title : "")};
-labelloc="t";
-bgcolor=${JSON.stringify(dark ? "black" : "white")}
-fontcolor=${JSON.stringify(theme["title"] || "black")}
-fontname=${JSON.stringify(font)};
-node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
-edge [ fontname=${JSON.stringify(font)} fontsize=12 color="${theme["edge"]}" ]
+    // base graph styling
+    rankdir="TB";
+    splines=true;
+    overlap=false;
+    nodesep="0.2";
+    ranksep="0.4";
+    label=${JSON.stringify(typeof parsed.title === "string" ? parsed.title : "")};
+    labelloc="t";
+    bgcolor=${JSON.stringify(dark ? "black" : "white")}
+    fontcolor=${JSON.stringify(theme["title"] || "black")}
+    fontname=${JSON.stringify(font)};
+    node [ shape="plaintext" style="filled, rounded" fontname=${JSON.stringify(font)} margin=0.2 ]
+    edge [ fontname=${JSON.stringify(font)} fontsize=12 color="${theme["edge"]}" ]
 
-// is reality a hologram?
-reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${theme["reality-text"]}" ]
+    // is reality a hologram?
+    ${line("reality", { label: "Reality", ...propertiesOfReality })}
 
 `;
     const goals = parsed.goals || [];
@@ -222,7 +232,10 @@ reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${them
     const allNodes = [...facts, ...attacks, ...mitigations, ...goals];
     const types: { [name: string]: NodeType } = {};
     for (const node of allNodes) {
-        const [toName] = Object.entries(node)[0];
+        if (typeof node != "object" || node === null) {
+            throw new Error(`nodes must each be an object containing at least one property`);
+        }
+        const [toName] = firstProperty(node);
         const fromNames = backwards[toName] || (backwards[toName] = []);
         if (node.from) {
             for (const from of node.from) {
@@ -280,12 +293,15 @@ reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${them
     function nodes(type: NodeType, values: NodeDeclaration[], properties: GraphvizNodeProperties) {
         const result = [];
         for (const value of values) {
-            const [name, label] = Object.entries(value)[0];
+            const [name, label] = firstProperty(value);
+            if (Object.hasOwnProperty.call(types, name)) {
+                throw new Error(`${name} cannot be declared twice. It was previously declared as ${types[name]}`);
+            }
             types[name] = type;
             if (shouldShow(name)) {
                 result.push(line(mangleName(name), {
                     label: wordwrap(label === null ? defaultLabelForName(name) : String(label), 18),
-                    ...properties,
+                    ...name === "reality" ? propertiesOfReality : properties,
                 }));
             }
         }
@@ -298,16 +314,19 @@ reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${them
             fillcolor: theme["fact-fill"],
             fontcolor: theme["fact-text"] || "black",
         }),
+        ``,
         `// attacks`,
         ...nodes("attack", attacks, {
             fillcolor: theme["attack-fill"],
             fontcolor: theme["attack-text"] || "black",
         }),
+        ``,
         `// mitigations`,
         ...nodes("mitigation", mitigations, {
             fillcolor: theme["mitigation-fill"],
             fontcolor: theme["mitigation-text"] || "black",
         }),
+        ``,
         `// goals`,
         ...nodes("goal", goals, {
             fillcolor: theme["goal-fill"],
@@ -317,7 +336,7 @@ reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${them
 
     function edges(entries: NodeDeclaration[], properties: GraphvizNodeProperties) {
         return entries.reduce((edges, value) => {
-            const [name] = Object.entries(value)[0];
+            const [name] = firstProperty(value);
             if (!shouldShow(name)) {
                 return edges;
             }
@@ -356,7 +375,7 @@ reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${them
     const allEdgeLines = [...edges(goals, {}), ...edges(attacks, {}), ...edges(mitigations, {}), ...edges(facts, {})];
 
     const goalNames = goals.map((goal) => {
-        const [goalName] = Object.entries(goal)[0];
+        const [goalName] = firstProperty(goal);
         return goalName;
     });
 
@@ -375,10 +394,10 @@ reality [ label="Reality" fillcolor="${theme["reality-fill"]}" fontcolor="${them
         }
         if (filteredToNames.length > 1) {
             subgraphs.push(`    subgraph ${mangleName(fromName)}_order {
-rank=same;
-${filteredToNames.map(toName => mangleName(toName) + ";").join("\n        ")}
-}
-${line(filteredToNames.map(mangleName).join(" -> "), { style: "invis" })}`);
+        rank=same;
+        ${filteredToNames.map(toName => mangleName(toName) + ";").join("\n        ")}
+    }
+    ${line(filteredToNames.map(mangleName).join(" -> "), { style: "invis" })}`);
         }
     }
 
@@ -386,15 +405,16 @@ ${line(filteredToNames.map(mangleName).join(" -> "), { style: "invis" })}`);
     if (shownGoals.length > 1) {
 
         subgraphs.push(`    subgraph goal_order {
-rank=same;
-${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
-}`);
+        rank=same;
+        ${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
+    }`);
         subgraphs.push("    " + line(shownGoals.join(" -> "), { style: "invis" }));
     }
+    subgraphs.push(`    // top-to-bottom layout directives`);
     subgraphs.push(`    { rank=min; reality; }`);
 
     for (const node of allNodes) {
-        const [toName] = Object.entries(node)[0];
+        const [toName] = firstProperty(node);
         if (shouldShow(toName) && !forwards[toName] && shownGoals.indexOf(toName) === -1) {
             for (const goalName of shownGoals) {
                 subgraphs.push("    " + line(mangleName(toName) + " -> " + mangleName(goalName), { style: "invis", weight: "0" }));
@@ -405,7 +425,7 @@ ${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
     const footer = "\n\n}\n";
 
     return {
-        dot: header + "    " + allNodeLines.join("\n    ") + "\n\n    " + allEdgeLines.join("\n    ") + "\n\n    // subgraphs to give proper layout\n" + subgraphs.join("\n\n") + footer,
+        dot: header + "    " + allNodeLines.join("\n    ") + "\n\n    // edges\n    " + allEdgeLines.join("\n    ") + "\n\n    // left-to-right layout directives\n" + subgraphs.join("\n\n") + footer,
         title: typeof parsed.title === "string" ? parsed.title : "",
         types,
         themeName,

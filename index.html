@@ -676,8 +676,7 @@ filter:
                         if (window.File && URL.createObjectURL) {
                             const file = new File([embedDotComment(dot, newInput)], "graph.dot", {
                                 "type": "text/vnd.graphviz",
-                            }
-                            );
+                            });
 
                             downloadLink.download = title + ".dot";
                             const newObjectURL = URL.createObjectURL(file);
