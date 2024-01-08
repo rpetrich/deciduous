@@ -414,23 +414,37 @@ ${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
 
 declare function btoa(text: string): string;
 
+function base64Encode(text: string): string {
+    return btoa(encodeURIComponent(text).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode(parseInt(p1, 16))
+    }));
+}
+
+declare function atob(text: string): string;
+
+function base64Decode(text: string): string {
+    return decodeURIComponent(Array.prototype.map.call(atob(text), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    }).join(''))
+}
+
 export function embedDotComment(dot: string, input: string): string {
-    return dot + "// deciduous:" + btoa(input);
+    return dot + "// deciduous:" + base64Encode(input);
 }
 
 export function embedSvgComment(svg: string, input: string): string {
-    return svg + "<!-- deciduous:" + btoa(input) + " -->";
+    return svg + "<!-- deciduous:" + base64Encode(input) + " -->";
 }
 
 export function trailingPngComment(input: string): string {
-    return "\n// deciduous:" + btoa(input);
+    return "\n// deciduous:" + base64Encode(input);
 }
 
 export function parseEmbeddedComment(text: string): string | undefined {
     // extract hidden embedded comment
     const match = text.match(/\n(\/\/|<!--) deciduous:([a-zA-Z0-9]+=*)( -->)?$/);
     if (match) {
-        return atob(match[2]);
+        return base64Decode(match[2]);
     }
     return undefined;
 }
