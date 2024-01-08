@@ -674,7 +674,6 @@ filter:
 
                         // Create a download link
                         if (window.File && URL.createObjectURL) {
-                            const encodedInput = btoa(newInput);
                             const file = new File([embedDotComment(dot, newInput)], "graph.dot", {
                                 "type": "text/vnd.graphviz",
                             }
