@@ -564,13 +564,11 @@ filter:
                 setTimeout(syncScroll, 0);
             }
             const themePicker = document.getElementById("themePicker");
-            let oldDark = false;
             function rerender() {
                 syncScroll();
                 const newInput = inputSource.value;
-                if (newInput != lastInput || oldDark != dark) {
+                if (newInput != lastInput) {
                     lastInput = newInput;
-                    oldDark = dark;
                     if (window.localStorage) {
                         localStorage.setItem("deciduous-content", newInput);
                     }
@@ -653,6 +651,7 @@ filter:
                         let dot, title;
                         const parsed = jsyaml.load(newInput);
                         ({ dot, title, types, themeName } = convertToDot(parsed));
+                        dark = themes[themeName].dark;
                         themePicker.value = themeName;
                         // Syntax highlighting
                         updateTextArea();

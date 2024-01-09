@@ -79,6 +79,7 @@ export type Input = {
     attacks?: NodeDeclaration[];
     mitigations?: NodeDeclaration[];
     filter?: string[];
+    legend?: boolean;
 };
 
 export type Node = {
@@ -105,7 +106,7 @@ type NodeType = "attack" | "mitigation" | "fact" | "goal";
 type Theme = {
     "dark"?: boolean;
     "title"?: string;
-    "edge"?: string;
+    "edge": string;
     "edge-text": string;
     "backwards-edge": string;
     "backwards-edge-penwidth"?: number;
@@ -406,7 +407,7 @@ digraph {
 
         subgraphs.push(`    subgraph goal_order {
         rank=same;
-        ${shownGoals.map(goalName => mangleName(goalName) + ";").join("\n        ")}
+        ${shownGoals.concat(parsed.legend ? ["legend_invis"] : []).map(goalName => mangleName(goalName) + ";").join("\n        ")}
     }`);
         subgraphs.push("    " + line(shownGoals.join(" -> "), { style: "invis" }));
     }
@@ -421,8 +422,54 @@ digraph {
             }
         }
     }
-    subgraphs.push(`    { rank=max; ${shownGoals.map(goalName => mangleName(goalName) + "; ").join("")}}`);
-    const footer = "\n\n}\n";
+    subgraphs.push(`    { rank=max; ${shownGoals.concat(parsed.legend ? ["legend_invis"] : []).map(goalName => mangleName(goalName) + "; ").join("")}}`);
+    let footer = "\n\n}\n";
+    if (typeof parsed.legend !== "undefined" && typeof parsed.legend !== "boolean") {
+        throw new Error(`legend attribute must be a boolean, instead was ${typeof parsed.legend}`);
+    }
+    if (parsed.legend) {
+        footer = `    ${line("legend_reality", {
+        label: "Reality",
+        ...propertiesOfReality,
+    })}
+    ${line("legend_fact", {
+        label: "Fact",
+        fillcolor: theme["fact-fill"],
+        fontcolor: theme["fact-text"] || "black",
+    })}
+    ${line("legend_attack", {
+        label: "Attack",
+        fillcolor: theme["attack-fill"],
+        fontcolor: theme["attack-text"] || "black",
+    })}
+    ${line("legend_mitigation", {
+        label: "Mitigation",
+        fillcolor: theme["mitigation-fill"],
+        fontcolor: theme["mitigation-text"] || "black",
+    })}
+    ${line("legend_goal", {
+        label: "Goal",
+        fillcolor: theme["goal-fill"],
+        fontcolor: theme["goal-text"],
+    })}
+    legend_invis [ label=""; style=invis; ]
+    subgraph legend {
+        cluster=true;
+        margin=10;
+        color=${JSON.stringify(theme["edge"])};
+        label="Legend";
+        legend_reality;
+        legend_fact;
+        legend_attack;
+        legend_mitigation;
+        legend_goal;
+    }
+    legend_reality -> legend_fact -> legend_attack -> legend_mitigation -> legend_goal -> legend_invis [ style=invis; weight=50; ];
+
+    ${shownGoals.map((goalName) => `${line("legend_invis -> " + mangleName(goalName), { style: "invis", weight: "0" })};`)}
+
+${footer}`;
+    }
 
     return {
         dot: header + "    " + allNodeLines.join("\n    ") + "\n\n    // edges\n    " + allEdgeLines.join("\n    ") + "\n\n    // left-to-right layout directives\n" + subgraphs.join("\n\n") + footer,
