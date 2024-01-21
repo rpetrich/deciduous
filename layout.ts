@@ -422,7 +422,9 @@ digraph {
             }
         }
     }
-    subgraphs.push(`    { rank=max; ${shownGoals.concat(parsed.legend ? ["legend_invis"] : []).map(goalName => mangleName(goalName) + "; ").join("")}}`);
+    subgraphs.push(`
+    // legend pseudo-nodes
+    { rank=max; ${shownGoals.concat(parsed.legend ? ["legend_invis"] : []).map(goalName => mangleName(goalName) + "; ").join("")}}`);
     let footer = "\n\n}\n";
     if (typeof parsed.legend !== "undefined" && typeof parsed.legend !== "boolean") {
         throw new Error(`legend attribute must be a boolean, instead was ${typeof parsed.legend}`);
@@ -466,7 +468,7 @@ digraph {
     }
     legend_reality -> legend_fact -> legend_attack -> legend_mitigation -> legend_goal -> legend_invis [ style=invis; weight=50; ];
 
-    ${shownGoals.map((goalName) => `${line("legend_invis -> " + mangleName(goalName), { style: "invis", weight: "0" })};`)}
+    ${shownGoals.map((goalName) => `${line("legend_invis -> " + mangleName(goalName), { style: "invis", weight: "0" })};`).join("\n\t")}
 
 ${footer}`;
     }
