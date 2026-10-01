@@ -74,6 +74,9 @@ export type Input = {
     theme?: keyof typeof themes | string;
     dark?: boolean;
     title?: string;
+    ranksep?: number;
+    splines?: boolean | "true" | "curved" | "polyline" | "ortho" | "false";
+    rankdir?: "TB" | "LR";
     goals?: NodeDeclaration[];
     facts?: NodeDeclaration[];
     attacks?: NodeDeclaration[];
@@ -200,15 +203,18 @@ export function convertToDot(parsed: Input): RenderedOutput {
     const theme = themes[themeName] as Theme;
     const dark = theme.dark ? true : false;
 
+    const ranksep = typeof parsed.ranksep === "number" ? parsed.ranksep : 0.4;
+    const splinesValue = typeof parsed.splines === "string" ? parsed.splines : parsed.splines === false ? "false" : "true";
+    const rankdir = (parsed.rankdir === "LR") ? "LR" : "TB";
     const propertiesOfReality = { fillcolor: theme["reality-fill"], fontcolor: theme["reality-text"] } as const;
     const header = `// Generated from https://www.deciduous.app/
 digraph {
     // base graph styling
-    rankdir="TB";
-    splines=true;
+    rankdir="${rankdir}";
+    splines=${splinesValue};
     overlap=false;
     nodesep="0.2";
-    ranksep="0.4";
+    ranksep=${ranksep};
     label=${JSON.stringify(typeof parsed.title === "string" ? parsed.title : "")};
     labelloc="t";
     bgcolor=${JSON.stringify(dark ? "black" : "white")}

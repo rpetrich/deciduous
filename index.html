@@ -498,6 +498,17 @@ filter:
             <div class="menuWrapper">
                 <button class="edit-button"><a href="#" id="editButton">Edit</a></button>
                 <label for="themePicker">Theme: </label><select id="themePicker"></select>
+                <label for="ranksepInput">Row spacing: </label><input type="number" id="ranksepInput" min="0.1" max="5" step="0.1" value="0.4" style="width:50px; font-family:inherit;">
+                <label for="splinesPicker">Edges: </label><select id="splinesPicker">
+                    <option value="true" selected>Curved</option>
+                    <option value="polyline">Polyline</option>
+                    <option value="ortho">Orthogonal</option>
+                    <option value="false">Straight</option>
+                </select>
+                <label for="rankdirPicker">Direction: </label><select id="rankdirPicker">
+                    <option value="TB" selected>Vertical</option>
+                    <option value="LR">Horizontal</option>
+                </select>
                 <div id="downloadWrapper" class="dropdownWrapper">
                     <a href="#" id="downloadHoverArea" class="dropdownHoverArea">Download</a>
                     <ul>
@@ -653,6 +664,15 @@ filter:
                         ({ dot, title, types, themeName } = convertToDot(parsed));
                         dark = themes[themeName].dark;
                         themePicker.value = themeName;
+                        if (typeof parsed.ranksep === "number") {
+                            ranksepInput.value = parsed.ranksep;
+                        }
+                        if (typeof parsed.splines === "string") {
+                            splinesPicker.value = parsed.splines;
+                        }
+                        if (typeof parsed.rankdir === "string") {
+                            rankdirPicker.value = parsed.rankdir;
+                        }
                         // Syntax highlighting
                         updateTextArea();
                         // console.log(dot);
@@ -968,6 +988,45 @@ filter:
                     newValue = lastInput.slice(0, match.index) + "theme: " + themePicker.value + lastInput.slice(match.index + match[0].length);
                 } else {
                     newValue = "theme: " + themePicker.value + "\n" + lastInput;
+                }
+                inputSource.value = newValue;
+                rerender();
+            });
+            const ranksepInput = document.getElementById("ranksepInput");
+            ranksepInput.addEventListener("input", () => {
+                const ranksepValue = parseFloat(ranksepInput.value);
+                const match = lastInput.match(/^ranksep: [\d.]+$/m);
+                let newValue;
+                if (match) {
+                    newValue = lastInput.slice(0, match.index) + "ranksep: " + ranksepValue + lastInput.slice(match.index + match[0].length);
+                } else {
+                    newValue = "ranksep: " + ranksepValue + "\n" + lastInput;
+                }
+                inputSource.value = newValue;
+                rerender();
+            });
+            const splinesPicker = document.getElementById("splinesPicker");
+            splinesPicker.addEventListener("change", () => {
+                const splinesValue = splinesPicker.value;
+                const match = lastInput.match(/^splines: \w+$/m);
+                let newValue;
+                if (match) {
+                    newValue = lastInput.slice(0, match.index) + "splines: " + splinesValue + lastInput.slice(match.index + match[0].length);
+                } else {
+                    newValue = "splines: " + splinesValue + "\n" + lastInput;
+                }
+                inputSource.value = newValue;
+                rerender();
+            });
+            const rankdirPicker = document.getElementById("rankdirPicker");
+            rankdirPicker.addEventListener("change", () => {
+                const rankdirValue = rankdirPicker.value;
+                const match = lastInput.match(/^rankdir: \w+$/m);
+                let newValue;
+                if (match) {
+                    newValue = lastInput.slice(0, match.index) + "rankdir: " + rankdirValue + lastInput.slice(match.index + match[0].length);
+                } else {
+                    newValue = "rankdir: " + rankdirValue + "\n" + lastInput;
                 }
                 inputSource.value = newValue;
                 rerender();
